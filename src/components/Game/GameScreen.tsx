@@ -478,8 +478,15 @@ export function GameScreen({
   const [elapsed, setElapsed] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
   const [sprintTimeUp, setSprintTimeUp] = useState(false);
+  const [serverXpResult, setServerXpResult] = useState<{
+    earnedXp: number;
+    totalXp: number;
+    newRank: string;
+    didRankUp: boolean;
+  } | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sprintRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scoreSubmittedRef = useRef(false);
   const limit = TIME_LIMITS[difficulty];
 
   // Initialise on mount / when props change
@@ -488,6 +495,8 @@ export function GameScreen({
     setElapsed(0);
     setShowCompletion(false);
     setSprintTimeUp(false);
+    setServerXpResult(null);
+    scoreSubmittedRef.current = false;
   }, [difficulty, characterId, mode, initGame]);
 
   // Classic/FogOfWar elapsed timer
@@ -547,6 +556,50 @@ export function GameScreen({
       return () => clearTimeout(t);
     }
   }, [isComplete]);
+
+  // ── Submit score to /api/score on completion ──
+  useEffect(() => {
+    if (!isComplete || scoreSubmittedRef.current) return;
+    scoreSubmittedRef.current = true;
+
+    const modeMap: Record<GameMode, string> = {
+      classic: 'prime-grid',
+      sprint: 'prime-grid',
+      fogOfWar: 'prime-grid',
+    };
+
+    const difficultyMultipliers: Record<Difficulty, number> = {
+      easy: 0.5,
+      medium: 1.0,
+      hard: 1.5,
+      expert: 2.0,
+    };
+
+    fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        modeId: modeMap[mode],
+        score: xp,
+        timeMs: elapsed * 1000,
+        difficultyMultiplier: difficultyMultipliers[difficulty],
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setServerXpResult({
+            earnedXp: data.earnedXp,
+            totalXp: data.totalXp,
+            newRank: data.newRank,
+            didRankUp: data.didRankUp,
+          });
+        }
+      })
+      .catch(() => {
+        // Silent fail — user can still see local XP
+      });
+  }, [isComplete, mode, difficulty, xp, elapsed]);
 
   // Apply CSS variables for theme
   const themeVars = activeTheme
