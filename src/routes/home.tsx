@@ -1,173 +1,112 @@
 // ──────────────────────────────────────────────
-// NINE — Home / Landing Route
+// NINE — Grand Lobby (Mode Selector)
 // ──────────────────────────────────────────────
 
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate } from 'react-router';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import { THEMES } from '../lib/themes';
-import { GameScreen } from '../components/Game/GameScreen';
-import type { CharacterTheme, Difficulty, GameMode } from '../types/game';
 
-// ─── Constants ───────────────────────────────
+// ─── Types ──────────────────────────────────
 
-const DIFFICULTIES: { value: Difficulty; label: string; desc: string }[] = [
-  { value: 'easy', label: 'Easy', desc: '36–40 clues' },
-  { value: 'medium', label: 'Medium', desc: '41–48 clues' },
-  { value: 'hard', label: 'Hard', desc: '49–53 clues' },
-  { value: 'expert', label: 'Expert', desc: '54–58 clues' },
+type GameCategory = 'Core Systems' | 'The Cyphers' | 'The Archives' | 'The Matrices';
+
+interface GameModeEntry {
+  id: string;
+  name: string;
+  description: string;
+  category: GameCategory;
+}
+
+// ─── Mode Registry ──────────────────────────
+
+const GAME_MODES: readonly GameModeEntry[] = [
+  // Core Systems
+  { id: 'prime-grid',      name: 'The Prime Grid',    description: 'Classic 9×9 logic. The original test.',          category: 'Core Systems' },
+  { id: 'glyph-grid',      name: 'Glyph Grid',        description: 'Wordoku with diagonal constraints.',             category: 'Core Systems' },
+  { id: 'shattered-grid',  name: 'Shattered Grid',    description: 'Reassemble fractured polyomino shards.',         category: 'Core Systems' },
+  { id: 'canvas-fracture', name: 'Canvas Fracture',   description: 'Slide and rotate tiles into place.',             category: 'Core Systems' },
+
+  // The Cyphers
+  { id: 'vault-breaker',   name: 'Vault Breaker',     description: 'Crack the 5-letter code in 6 attempts.',         category: 'The Cyphers' },
+  { id: 'cipher-scramble', name: 'Cipher Scramble',   description: 'Unscramble letters. Find every word.',           category: 'The Cyphers' },
+  { id: 'lexicon-weave',   name: 'Lexicon Weave',     description: 'Crossword grid. Intersections are law.',         category: 'The Cyphers' },
+  { id: 'enigma-weave',    name: 'Enigma Weave',      description: 'Cryptic crossword. Double meanings only.',       category: 'The Cyphers' },
+
+  // The Archives
+  { id: 'interrogation',   name: 'The Interrogation', description: 'Timed quiz. Multiplier decays every second.',    category: 'The Archives' },
+  { id: 'alias-protocol',  name: 'Alias Protocol',    description: '5 clues. 3 guesses. Identify the subject.',      category: 'The Archives' },
+  { id: 'global-override', name: 'Global Override',   description: 'Rapid-fire geo flash. Speed is everything.',     category: 'The Archives' },
+
+  // The Matrices
+  { id: 'data-sift',       name: 'Data Sift',         description: 'Find 4 that belong. Reject the noise.',          category: 'The Matrices' },
+  { id: 'cinema-lattice',  name: 'Cinema Lattice',    description: 'Fill the actor–genre–decade matrix.',             category: 'The Matrices' },
+  { id: 'chronos-shift',   name: 'Chronos Shift',     description: 'Sort events into chronological order.',           category: 'The Matrices' },
+] as const;
+
+const CATEGORY_ORDER: readonly GameCategory[] = [
+  'Core Systems',
+  'The Cyphers',
+  'The Archives',
+  'The Matrices',
 ];
 
-const MODES: { value: GameMode; label: string; desc: string }[] = [
-  { value: 'classic', label: 'Classic', desc: 'Standard rules' },
-  { value: 'sprint', label: 'Sprint', desc: '3 min · Earn XP' },
-  { value: 'fogOfWar', label: 'Fog of War', desc: 'Reveal by solving' },
-];
+const CATEGORY_ACCENTS: Record<GameCategory, string> = {
+  'Core Systems': 'rgba(96, 165, 250, 0.7)',   // blue
+  'The Cyphers':  'rgba(167, 139, 250, 0.7)',   // violet
+  'The Archives': 'rgba(251, 191, 36, 0.7)',    // amber
+  'The Matrices': 'rgba(52, 211, 153, 0.7)',    // emerald
+};
 
-// ─── Character Card ───────────────────────────
+// ─── Category Icon Glyphs ───────────────────
 
-interface CharacterCardProps {
-  theme: CharacterTheme;
-  isSelected: boolean;
-  onSelect: (id: string) => void;
-}
+const CATEGORY_GLYPHS: Record<GameCategory, string> = {
+  'Core Systems': '◈',
+  'The Cyphers':  '⟁',
+  'The Archives': '⧖',
+  'The Matrices': '⬡',
+};
 
-function CharacterCard({ theme, isSelected, onSelect }: CharacterCardProps) {
-  const subtitles: Record<string, string> = {
-    architect: 'Blueprint · Precision',
-    oracle: 'Obsidian · Foresight',
-    analyst: 'Terminal · Logic',
-    sculptor: 'Ivory · Intuition',
-  };
+// ─── Animation Variants ─────────────────────
 
-  return (
-    <motion.button
-      className={clsx(
-        'relative flex flex-col items-start gap-2',
-        'rounded-xl p-4 text-left',
-        'border transition-colors duration-150',
-        'overflow-hidden',
-      )}
-      style={{
-        background: isSelected
-          ? theme.colors.background
-          : 'rgba(255,255,255,0.03)',
-        borderColor: isSelected ? theme.colors.accent : 'rgba(255,255,255,0.08)',
-        minWidth: '140px',
-      }}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => onSelect(theme.id)}
-      aria-pressed={isSelected}
-      aria-label={`Select character ${theme.name}`}
-    >
-      <div
-        className="w-8 h-8 rounded-md shrink-0"
-        style={{ background: theme.colors.accent }}
-      />
-      <div className="flex flex-col gap-0.5">
-        <span
-          className="text-sm font-bold tracking-wide leading-none"
-          style={{
-            color: isSelected ? theme.colors.primaryText : 'rgba(255,255,255,0.8)',
-          }}
-        >
-          {theme.name}
-        </span>
-        <span
-          className="text-[0.6rem] uppercase tracking-widest leading-none"
-          style={{
-            color: isSelected ? theme.colors.accent : 'rgba(255,255,255,0.3)',
-          }}
-        >
-          {subtitles[theme.id] ?? ''}
-        </span>
-      </div>
-      <AnimatePresence>
-        {isSelected && (
-          <motion.div
-            className="absolute top-2 right-2 w-2 h-2 rounded-full"
-            style={{ background: theme.colors.accent }}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
-          />
-        )}
-      </AnimatePresence>
-    </motion.button>
-  );
-}
+const sectionVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.12,
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
+    },
+  }),
+};
 
-// ─── Pill Selector (shared for difficulty + mode) ──
+const cardVariants = {
+  hidden: { opacity: 0, y: 12, scale: 0.97 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: i * 0.06,
+      duration: 0.35,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
+    },
+  }),
+};
 
-interface PillSelectorProps<T extends string> {
-  items: { value: T; label: string; desc: string }[];
-  selected: T;
-  accentColor: string;
-  onSelect: (v: T) => void;
-}
+// ─── Background Grid ────────────────────────
 
-function PillSelector<T extends string>({
-  items,
-  selected,
-  accentColor,
-  onSelect,
-}: PillSelectorProps<T>) {
-  return (
-    <div className="flex gap-2">
-      {items.map((item) => {
-        const isSelected = selected === item.value;
-        return (
-          <motion.button
-            key={item.value}
-            className={clsx(
-              'relative flex flex-col items-center gap-0.5',
-              'px-4 py-3 rounded-lg flex-1',
-              'border',
-            )}
-            style={{
-              background: isSelected ? accentColor : 'rgba(255,255,255,0.03)',
-              borderColor: isSelected ? accentColor : 'rgba(255,255,255,0.08)',
-              color: isSelected ? '#000' : 'rgba(255,255,255,0.6)',
-            }}
-            whileHover={
-              isSelected
-                ? {}
-                : { borderColor: accentColor, color: accentColor }
-            }
-            whileTap={{ scale: 0.97 }}
-            onClick={() => onSelect(item.value)}
-            aria-pressed={isSelected}
-          >
-            <span className="text-sm font-bold tracking-wide">
-              {item.label}
-            </span>
-            <span
-              className="text-[0.55rem] uppercase tracking-widest"
-              style={{ opacity: isSelected ? 0.7 : 0.4 }}
-            >
-              {item.desc}
-            </span>
-          </motion.button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Background Grid Decoration ──────────────
-
-function BackgroundGrid({ accent }: { accent: string }) {
+function BackgroundGrid() {
   return (
     <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="fixed inset-0 w-full h-full pointer-events-none z-0"
       aria-hidden="true"
       preserveAspectRatio="xMidYMid slice"
     >
       <defs>
         <pattern
-          id="mini-grid"
+          id="lobby-grid"
           width="60"
           height="60"
           patternUnits="userSpaceOnUse"
@@ -175,167 +114,226 @@ function BackgroundGrid({ accent }: { accent: string }) {
           <path
             d="M 60 0 L 0 0 0 60"
             fill="none"
-            stroke={accent}
-            strokeWidth="0.4"
-            opacity="0.08"
+            stroke="rgba(255,255,255,0.04)"
+            strokeWidth="0.5"
           />
         </pattern>
+        <radialGradient id="lobby-fade" cx="50%" cy="0%" r="70%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.03)" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
       </defs>
-      <rect width="100%" height="100%" fill="url(#mini-grid)" />
+      <rect width="100%" height="100%" fill="url(#lobby-grid)" />
+      <rect width="100%" height="100%" fill="url(#lobby-fade)" />
     </svg>
   );
 }
 
-// ─── Play Button Label ────────────────────────
+// ─── Scanline Decoration ────────────────────
 
-const PLAY_LABELS: Record<GameMode, string> = {
-  classic: 'Play Classic',
-  sprint: 'Start Sprint',
-  fogOfWar: 'Enter the Fog',
-};
-
-// ─── Home Route ───────────────────────────────
-
-export default function Home() {
-  const [selectedCharacterId, setSelectedCharacterId] = useState<string>(
-    THEMES[0].id,
-  );
-  const [selectedDifficulty, setSelectedDifficulty] =
-    useState<Difficulty>('medium');
-  const [selectedMode, setSelectedMode] = useState<GameMode>('classic');
-  const [inGame, setInGame] = useState(false);
-
-  const activeTheme =
-    THEMES.find((t) => t.id === selectedCharacterId) ?? THEMES[0];
-
-  const themeVars = {
-    '--color-background': activeTheme.colors.background,
-    '--color-grid-lines': activeTheme.colors.gridLines,
-    '--color-primary-text': activeTheme.colors.primaryText,
-    '--color-accent': activeTheme.colors.accent,
-    '--color-error': activeTheme.colors.error,
-  } as React.CSSProperties;
-
-  if (inGame) {
-    return (
-      <GameScreen
-        difficulty={selectedDifficulty}
-        characterId={selectedCharacterId}
-        mode={selectedMode}
-        onExit={() => setInGame(false)}
-      />
-    );
-  }
-
+function Scanlines() {
   return (
     <div
-      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden px-6"
-      style={{ background: activeTheme.colors.background, ...themeVars }}
-    >
-      <BackgroundGrid accent={activeTheme.colors.accent} />
+      className="fixed inset-0 pointer-events-none z-[1] opacity-[0.015]"
+      aria-hidden="true"
+      style={{
+        backgroundImage:
+          'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 3px)',
+      }}
+    />
+  );
+}
 
-      <motion.div
-        className="relative z-10 flex flex-col items-center gap-10 w-full max-w-sm"
-        key={selectedCharacterId}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-      >
-        {/* Wordmark */}
-        <div className="flex flex-col items-center gap-2 select-none">
+// ─── Mode Card ──────────────────────────────
+
+interface ModeCardProps {
+  mode: GameModeEntry;
+  accent: string;
+  index: number;
+  onClick: () => void;
+}
+
+function ModeCard({ mode, accent, index, onClick }: ModeCardProps) {
+  return (
+    <motion.button
+      className={clsx(
+        'group relative flex flex-col items-start gap-3',
+        'rounded-xl p-5 text-left w-full',
+        'border border-white/[0.06]',
+        'bg-white/[0.02] backdrop-blur-sm',
+        'cursor-pointer outline-none',
+        'focus-visible:ring-1 focus-visible:ring-white/20',
+      )}
+      custom={index}
+      variants={cardVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-20px' }}
+      whileHover={{
+        scale: 1.02,
+        borderColor: 'rgba(255,255,255,0.3)',
+        transition: { type: 'spring' as const, stiffness: 400, damping: 25 },
+      }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      aria-label={`Play ${mode.name}`}
+    >
+      {/* Accent glow on hover */}
+      <div
+        className={clsx(
+          'absolute inset-0 rounded-xl opacity-0',
+          'group-hover:opacity-100 transition-opacity duration-300',
+        )}
+        style={{
+          background: `radial-gradient(ellipse at 30% 0%, ${accent}, transparent 70%)`,
+          opacity: 0,
+        }}
+      />
+      <div
+        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-[0.06] transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(ellipse at 30% 0%, ${accent}, transparent 70%)`,
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col gap-2 w-full">
+        <div className="flex items-center justify-between w-full">
+          <h3
+            className={clsx(
+              'text-[0.9rem] font-bold tracking-wide',
+              'text-white/90 group-hover:text-white',
+              'transition-colors duration-150',
+            )}
+          >
+            {mode.name}
+          </h3>
+          <motion.span
+            className="text-[0.65rem] text-white/20 group-hover:text-white/50 transition-colors duration-150"
+            aria-hidden="true"
+          >
+            →
+          </motion.span>
+        </div>
+        <p className="text-[0.75rem] leading-relaxed text-white/35 group-hover:text-white/50 transition-colors duration-150">
+          {mode.description}
+        </p>
+      </div>
+
+      {/* Bottom accent line */}
+      <div
+        className={clsx(
+          'absolute bottom-0 left-4 right-4 h-px',
+          'opacity-0 group-hover:opacity-100',
+          'transition-opacity duration-300',
+        )}
+        style={{ background: accent }}
+      />
+    </motion.button>
+  );
+}
+
+// ─── Home Route ─────────────────────────────
+
+export default function Home() {
+  const navigate = useNavigate();
+
+  const grouped = CATEGORY_ORDER.map((category) => ({
+    category,
+    modes: GAME_MODES.filter((m) => m.category === category),
+  }));
+
+  return (
+    <div className="relative min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+      <BackgroundGrid />
+      <Scanlines />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-5 py-16 sm:py-24">
+        {/* ── Header ── */}
+        <motion.header
+          className="flex flex-col items-center gap-4 mb-20 select-none"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
           <motion.h1
-            className="text-[5.5rem] font-black leading-none tracking-tighter"
-            style={{ color: activeTheme.colors.primaryText }}
+            className="text-[5rem] sm:text-[6.5rem] font-black leading-none tracking-tighter text-white"
             animate={{ opacity: [0.85, 1, 0.85] }}
             transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
           >
             NINE
           </motion.h1>
-          <span
-            className="text-[0.6rem] uppercase tracking-[0.4em] font-medium"
-            style={{ color: activeTheme.colors.accent }}
-          >
-            Competitive Sudoku
-          </span>
+          <p className="text-[0.6rem] uppercase tracking-[0.4em] font-medium text-white/30">
+            Logic · Deduction · Spatial · Trivia
+          </p>
+          <div className="w-16 h-px bg-white/10 mt-2" />
+        </motion.header>
+
+        {/* ── Category Sections ── */}
+        <div className="flex flex-col gap-16">
+          {grouped.map(({ category, modes }, sectionIndex) => (
+            <motion.section
+              key={category}
+              custom={sectionIndex}
+              variants={sectionVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-40px' }}
+            >
+              {/* Section Header */}
+              <div className="flex items-center gap-3 mb-6">
+                <span
+                  className="text-base opacity-40"
+                  style={{ color: CATEGORY_ACCENTS[category] }}
+                  aria-hidden="true"
+                >
+                  {CATEGORY_GLYPHS[category]}
+                </span>
+                <h2
+                  className="text-xs font-semibold uppercase"
+                  style={{
+                    letterSpacing: '0.2em',
+                    color: CATEGORY_ACCENTS[category],
+                  }}
+                >
+                  {category}
+                </h2>
+                <div
+                  className="flex-1 h-px opacity-20"
+                  style={{ background: CATEGORY_ACCENTS[category] }}
+                />
+              </div>
+
+              {/* Mode Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {modes.map((mode, cardIndex) => (
+                  <ModeCard
+                    key={mode.id}
+                    mode={mode}
+                    accent={CATEGORY_ACCENTS[category]}
+                    index={cardIndex}
+                    onClick={() => navigate(`/play/${mode.id}`)}
+                  />
+                ))}
+              </div>
+            </motion.section>
+          ))}
         </div>
 
-        {/* ── Character selector ── */}
-        <section className="w-full flex flex-col gap-3">
-          <span
-            className="text-[0.6rem] uppercase tracking-widest font-semibold"
-            style={{ color: activeTheme.colors.primaryText, opacity: 0.4 }}
-          >
-            Character
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {THEMES.map((theme) => (
-              <CharacterCard
-                key={theme.id}
-                theme={theme}
-                isSelected={selectedCharacterId === theme.id}
-                onSelect={setSelectedCharacterId}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* ── Mode selector ── */}
-        <section className="w-full flex flex-col gap-3">
-          <span
-            className="text-[0.6rem] uppercase tracking-widest font-semibold"
-            style={{ color: activeTheme.colors.primaryText, opacity: 0.4 }}
-          >
-            Mode
-          </span>
-          <PillSelector
-            items={MODES}
-            selected={selectedMode}
-            accentColor={activeTheme.colors.accent}
-            onSelect={setSelectedMode}
-          />
-        </section>
-
-        {/* ── Difficulty selector ── */}
-        <section className="w-full flex flex-col gap-3">
-          <span
-            className="text-[0.6rem] uppercase tracking-widest font-semibold"
-            style={{ color: activeTheme.colors.primaryText, opacity: 0.4 }}
-          >
-            Difficulty
-          </span>
-          <PillSelector
-            items={DIFFICULTIES}
-            selected={selectedDifficulty}
-            accentColor={activeTheme.colors.accent}
-            onSelect={setSelectedDifficulty}
-          />
-        </section>
-
-        {/* ── Play button ── */}
-        <motion.button
-          className={clsx(
-            'w-full py-4 rounded-xl',
-            'text-sm font-black uppercase tracking-[0.2em]',
-          )}
-          style={{
-            background: activeTheme.colors.accent,
-            color: activeTheme.colors.background,
-          }}
-          whileHover={{ scale: 1.03, opacity: 0.92 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setInGame(true)}
+        {/* ── Footer ── */}
+        <motion.footer
+          className="mt-24 flex flex-col items-center gap-3 select-none"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
         >
-          {PLAY_LABELS[selectedMode]}
-        </motion.button>
-
-        {/* Footer */}
-        <p
-          className="text-[0.55rem] uppercase tracking-widest opacity-20 text-center"
-          style={{ color: activeTheme.colors.primaryText }}
-        >
-          V1 · Classic · Sprint · Fog of War
-        </p>
-      </motion.div>
+          <div className="w-8 h-px bg-white/10" />
+          <p className="text-[0.55rem] uppercase tracking-[0.3em] text-white/15">
+            14 Modes · Zero Compromise
+          </p>
+        </motion.footer>
+      </div>
     </div>
   );
 }
