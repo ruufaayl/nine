@@ -31,6 +31,8 @@ export type Grid = [
 
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
+export type GameMode = 'classic' | 'sprint' | 'fogOfWar';
+
 export interface GamePuzzle {
   /** The starting grid with holes (unsolved). */
   initial: Grid;

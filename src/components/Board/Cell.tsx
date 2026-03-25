@@ -15,6 +15,7 @@ interface CellProps {
   isPeer: boolean;
   isMatchingValue: boolean;
   isError: boolean;
+  isFogged: boolean;
   onClick: (row: number, col: number) => void;
 }
 
@@ -35,22 +36,28 @@ const PENCIL_POSITIONS: Record<number, string> = {
 // ─── Value digit animation variants ──────────
 
 const digitVariants: Variants = {
-  initial: { opacity: 0, scale: 1.4 },
+  initial: { opacity: 0, scale: 1.3 },
   animate: {
     opacity: 1,
     scale: 1,
-    transition: { type: 'spring' as const, stiffness: 600, damping: 20, duration: 0.12 },
+    transition: { type: 'tween' as const, duration: 0.12, ease: 'easeOut' as const },
   },
   exit: { opacity: 0, scale: 0.7, transition: { duration: 0.08 } },
 };
 
-// Error shake animation variant
+// Error shake animation variant — 200ms horizontal
 const shakeVariants: Variants = {
   shake: {
     x: [0, -6, 6, -4, 4, 0],
     transition: { duration: 0.2, ease: 'easeInOut' as const },
   },
   idle: { x: 0 },
+};
+
+// Fog reveal/hide
+const fogVariants: Variants = {
+  fogged: { opacity: 1 },
+  revealed: { opacity: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
 };
 
 // ─── Component ───────────────────────────────
@@ -61,6 +68,7 @@ export function Cell({
   isPeer,
   isMatchingValue,
   isError,
+  isFogged,
   onClick,
 }: CellProps) {
   const handleClick = useCallback(() => {
@@ -92,14 +100,14 @@ export function Cell({
             : 'var(--color-accent)',
       }}
       onClick={handleClick}
-      aria-label={`Cell row ${cell.row + 1} col ${cell.col + 1}${cell.value ? `, value ${cell.value}` : ''}`}
+      aria-label={`Cell row ${cell.row + 1} col ${cell.col + 1}${cell.value ? `, value ${cell.value}` : ''}${isFogged ? ', fogged' : ''}`}
       aria-selected={isSelected}
       animate={isError ? 'shake' : 'idle'}
       variants={shakeVariants}
     >
       {/* Main value */}
       <AnimatePresence mode="wait">
-        {cell.value !== null && (
+        {cell.value !== null && !isFogged && (
           <motion.span
             key={`${cell.row}-${cell.col}-${cell.value}`}
             className={clsx(
@@ -117,8 +125,8 @@ export function Cell({
         )}
       </AnimatePresence>
 
-      {/* Pencil marks */}
-      {hasPencilMarks && (
+      {/* Pencil marks (hidden when fogged) */}
+      {hasPencilMarks && !isFogged && (
         <div className="absolute inset-0">
           {Array.from({ length: 9 }, (_, i) => i + 1).map((n) =>
             cell.pencilMarks.has(n) ? (
@@ -139,10 +147,27 @@ export function Cell({
         </div>
       )}
 
+      {/* Fog overlay */}
+      <AnimatePresence>
+        {isFogged && (
+          <motion.div
+            className="absolute inset-0 z-20 rounded-[1px]"
+            style={{
+              background: 'var(--color-background)',
+              boxShadow: 'inset 0 0 8px 2px var(--color-grid-lines)',
+            }}
+            variants={fogVariants}
+            initial="fogged"
+            animate="fogged"
+            exit="revealed"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Selection ring */}
       {isSelected && (
         <motion.div
-          className="absolute inset-0 border-2 pointer-events-none"
+          className="absolute inset-0 border-2 pointer-events-none z-30"
           style={{ borderColor: 'var(--color-accent)' }}
           layoutId="cell-selection-ring"
           transition={{ type: 'spring', stiffness: 500, damping: 35 }}

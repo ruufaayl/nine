@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import clsx from 'clsx';
 import { THEMES } from '../lib/themes';
 import { GameScreen } from '../components/Game/GameScreen';
-import type { CharacterTheme, Difficulty } from '../types/game';
+import type { CharacterTheme, Difficulty, GameMode } from '../types/game';
 
 // ─── Constants ───────────────────────────────
 
@@ -16,6 +16,12 @@ const DIFFICULTIES: { value: Difficulty; label: string; desc: string }[] = [
   { value: 'medium', label: 'Medium', desc: '41–48 clues' },
   { value: 'hard', label: 'Hard', desc: '49–53 clues' },
   { value: 'expert', label: 'Expert', desc: '54–58 clues' },
+];
+
+const MODES: { value: GameMode; label: string; desc: string }[] = [
+  { value: 'classic', label: 'Classic', desc: 'Standard rules' },
+  { value: 'sprint', label: 'Sprint', desc: '3 min · Earn XP' },
+  { value: 'fogOfWar', label: 'Fog of War', desc: 'Reveal by solving' },
 ];
 
 // ─── Character Card ───────────────────────────
@@ -27,7 +33,6 @@ interface CharacterCardProps {
 }
 
 function CharacterCard({ theme, isSelected, onSelect }: CharacterCardProps) {
-  // Static descriptors per character
   const subtitles: Record<string, string> = {
     architect: 'Blueprint · Precision',
     oracle: 'Obsidian · Foresight',
@@ -56,12 +61,10 @@ function CharacterCard({ theme, isSelected, onSelect }: CharacterCardProps) {
       aria-pressed={isSelected}
       aria-label={`Select character ${theme.name}`}
     >
-      {/* Accent swatch */}
       <div
         className="w-8 h-8 rounded-md shrink-0"
         style={{ background: theme.colors.accent }}
       />
-
       <div className="flex flex-col gap-0.5">
         <span
           className="text-sm font-bold tracking-wide leading-none"
@@ -80,8 +83,6 @@ function CharacterCard({ theme, isSelected, onSelect }: CharacterCardProps) {
           {subtitles[theme.id] ?? ''}
         </span>
       </div>
-
-      {/* Selected indicator */}
       <AnimatePresence>
         {isSelected && (
           <motion.div
@@ -98,46 +99,60 @@ function CharacterCard({ theme, isSelected, onSelect }: CharacterCardProps) {
   );
 }
 
-// ─── Difficulty Pill ──────────────────────────
+// ─── Pill Selector (shared for difficulty + mode) ──
 
-interface DifficultyPillProps {
-  item: (typeof DIFFICULTIES)[number];
-  isSelected: boolean;
+interface PillSelectorProps<T extends string> {
+  items: { value: T; label: string; desc: string }[];
+  selected: T;
   accentColor: string;
-  onSelect: (d: Difficulty) => void;
+  onSelect: (v: T) => void;
 }
 
-function DifficultyPill({
-  item,
-  isSelected,
+function PillSelector<T extends string>({
+  items,
+  selected,
   accentColor,
   onSelect,
-}: DifficultyPillProps) {
+}: PillSelectorProps<T>) {
   return (
-    <motion.button
-      className={clsx(
-        'relative flex flex-col items-center gap-0.5',
-        'px-4 py-3 rounded-lg flex-1',
-        'border',
-      )}
-      style={{
-        background: isSelected ? accentColor : 'rgba(255,255,255,0.03)',
-        borderColor: isSelected ? accentColor : 'rgba(255,255,255,0.08)',
-        color: isSelected ? '#000' : 'rgba(255,255,255,0.6)',
-      }}
-      whileHover={isSelected ? {} : { borderColor: accentColor, color: accentColor }}
-      whileTap={{ scale: 0.97 }}
-      onClick={() => onSelect(item.value)}
-      aria-pressed={isSelected}
-    >
-      <span className="text-sm font-bold tracking-wide">{item.label}</span>
-      <span
-        className="text-[0.55rem] uppercase tracking-widest"
-        style={{ opacity: isSelected ? 0.7 : 0.4 }}
-      >
-        {item.desc}
-      </span>
-    </motion.button>
+    <div className="flex gap-2">
+      {items.map((item) => {
+        const isSelected = selected === item.value;
+        return (
+          <motion.button
+            key={item.value}
+            className={clsx(
+              'relative flex flex-col items-center gap-0.5',
+              'px-4 py-3 rounded-lg flex-1',
+              'border',
+            )}
+            style={{
+              background: isSelected ? accentColor : 'rgba(255,255,255,0.03)',
+              borderColor: isSelected ? accentColor : 'rgba(255,255,255,0.08)',
+              color: isSelected ? '#000' : 'rgba(255,255,255,0.6)',
+            }}
+            whileHover={
+              isSelected
+                ? {}
+                : { borderColor: accentColor, color: accentColor }
+            }
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onSelect(item.value)}
+            aria-pressed={isSelected}
+          >
+            <span className="text-sm font-bold tracking-wide">
+              {item.label}
+            </span>
+            <span
+              className="text-[0.55rem] uppercase tracking-widest"
+              style={{ opacity: isSelected ? 0.7 : 0.4 }}
+            >
+              {item.desc}
+            </span>
+          </motion.button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -171,13 +186,23 @@ function BackgroundGrid({ accent }: { accent: string }) {
   );
 }
 
+// ─── Play Button Label ────────────────────────
+
+const PLAY_LABELS: Record<GameMode, string> = {
+  classic: 'Play Classic',
+  sprint: 'Start Sprint',
+  fogOfWar: 'Enter the Fog',
+};
+
 // ─── Home Route ───────────────────────────────
 
 export default function Home() {
   const [selectedCharacterId, setSelectedCharacterId] = useState<string>(
     THEMES[0].id,
   );
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('medium');
+  const [selectedDifficulty, setSelectedDifficulty] =
+    useState<Difficulty>('medium');
+  const [selectedMode, setSelectedMode] = useState<GameMode>('classic');
   const [inGame, setInGame] = useState(false);
 
   const activeTheme =
@@ -196,6 +221,7 @@ export default function Home() {
       <GameScreen
         difficulty={selectedDifficulty}
         characterId={selectedCharacterId}
+        mode={selectedMode}
         onExit={() => setInGame(false)}
       />
     );
@@ -208,7 +234,6 @@ export default function Home() {
     >
       <BackgroundGrid accent={activeTheme.colors.accent} />
 
-      {/* Content */}
       <motion.div
         className="relative z-10 flex flex-col items-center gap-10 w-full max-w-sm"
         key={selectedCharacterId}
@@ -254,6 +279,22 @@ export default function Home() {
           </div>
         </section>
 
+        {/* ── Mode selector ── */}
+        <section className="w-full flex flex-col gap-3">
+          <span
+            className="text-[0.6rem] uppercase tracking-widest font-semibold"
+            style={{ color: activeTheme.colors.primaryText, opacity: 0.4 }}
+          >
+            Mode
+          </span>
+          <PillSelector
+            items={MODES}
+            selected={selectedMode}
+            accentColor={activeTheme.colors.accent}
+            onSelect={setSelectedMode}
+          />
+        </section>
+
         {/* ── Difficulty selector ── */}
         <section className="w-full flex flex-col gap-3">
           <span
@@ -262,17 +303,12 @@ export default function Home() {
           >
             Difficulty
           </span>
-          <div className="flex gap-2">
-            {DIFFICULTIES.map((d) => (
-              <DifficultyPill
-                key={d.value}
-                item={d}
-                isSelected={selectedDifficulty === d.value}
-                accentColor={activeTheme.colors.accent}
-                onSelect={setSelectedDifficulty}
-              />
-            ))}
-          </div>
+          <PillSelector
+            items={DIFFICULTIES}
+            selected={selectedDifficulty}
+            accentColor={activeTheme.colors.accent}
+            onSelect={setSelectedDifficulty}
+          />
         </section>
 
         {/* ── Play button ── */}
@@ -289,7 +325,7 @@ export default function Home() {
           whileTap={{ scale: 0.97 }}
           onClick={() => setInGame(true)}
         >
-          Play Classic
+          {PLAY_LABELS[selectedMode]}
         </motion.button>
 
         {/* Footer */}
@@ -297,7 +333,7 @@ export default function Home() {
           className="text-[0.55rem] uppercase tracking-widest opacity-20 text-center"
           style={{ color: activeTheme.colors.primaryText }}
         >
-          V1 · Classic Mode
+          V1 · Classic · Sprint · Fog of War
         </p>
       </motion.div>
     </div>

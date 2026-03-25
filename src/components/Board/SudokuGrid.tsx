@@ -15,6 +15,7 @@ interface SudokuGridProps {
   selectedCell: { row: number; col: number } | null;
   errors: Set<string>;
   isPencilMode: boolean;
+  foggedCells: Set<string>;
   onSelectCell: (row: number, col: number) => void;
   onFillCell: (value: number) => void;
   onTogglePencil: () => void;
@@ -46,6 +47,7 @@ export function SudokuGrid({
   selectedCell,
   errors,
   isPencilMode,
+  foggedCells,
   onSelectCell,
   onFillCell,
   onTogglePencil,
@@ -94,13 +96,12 @@ export function SudokuGrid({
         return;
       }
 
-      // Backspace / Delete — fill 0 (erases via hook logic of same-value toggle)
+      // Backspace / Delete — fill same value to clear it
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
         if (selectedCell) {
           const cell = grid[selectedCell.row][selectedCell.col];
           if (!cell.isGiven && cell.value !== null) {
-            // Dispatch fill with the same value to clear it
             onFillCell(cell.value);
           }
         }
@@ -136,7 +137,6 @@ export function SudokuGrid({
       )}
       style={{
         borderColor: 'var(--color-grid-lines)',
-        // Make the grid square and responsive
         width: 'min(90vw, 90vh, 540px)',
         height: 'min(90vw, 90vh, 540px)',
       }}
@@ -154,6 +154,7 @@ export function SudokuGrid({
             selectedValue !== null &&
             cell.value === selectedValue;
           const isError = errors.has(key);
+          const isFogged = foggedCells.has(key);
           const boxIdx = getBoxIndex(r, c);
 
           return (
@@ -161,7 +162,6 @@ export function SudokuGrid({
               key={key}
               className="relative"
               style={{
-                // Box borders: thick on box boundaries, thin otherwise
                 borderRight:
                   c === 8
                     ? 'none'
@@ -174,7 +174,6 @@ export function SudokuGrid({
                     : (r + 1) % 3 === 0
                       ? '2px solid var(--color-grid-lines)'
                       : '1px solid var(--color-grid-lines)',
-                opacity: 1,
               }}
               role="gridcell"
               aria-rowindex={r + 1}
@@ -187,6 +186,7 @@ export function SudokuGrid({
                 isPeer={isPeer}
                 isMatchingValue={isMatchingValue}
                 isError={isError}
+                isFogged={isFogged}
                 onClick={handleCellClick}
               />
             </div>

@@ -8,19 +8,20 @@ import clsx from 'clsx';
 import { SudokuGrid } from '../Board/SudokuGrid';
 import { NumberPad } from '../Board/NumberPad';
 import { useGameState } from '../../hooks/useGameState';
-import type { CharacterTheme, Difficulty } from '../../types/game';
+import type { Difficulty, GameMode } from '../../types/game';
 
 // ─── Types ───────────────────────────────────
 
 interface GameScreenProps {
   difficulty: Difficulty;
   characterId: string;
+  mode: GameMode;
   onExit: () => void;
 }
 
 // ─── Constants ───────────────────────────────
 
-/** Time limit per difficulty in seconds */
+/** Time limit per difficulty in seconds (classic / fog modes). */
 const TIME_LIMITS: Record<Difficulty, number> = {
   easy: 600,
   medium: 900,
@@ -58,7 +59,6 @@ function TimerRing({ elapsed, limit }: TimerRingProps) {
         className="absolute inset-0 -rotate-90"
         aria-hidden="true"
       >
-        {/* Track */}
         <circle
           cx="28"
           cy="28"
@@ -67,7 +67,6 @@ function TimerRing({ elapsed, limit }: TimerRingProps) {
           stroke="var(--color-grid-lines)"
           strokeWidth="3"
         />
-        {/* Draining arc */}
         <motion.circle
           cx="28"
           cy="28"
@@ -104,6 +103,113 @@ function TimerRing({ elapsed, limit }: TimerRingProps) {
         {label}
       </motion.span>
     </div>
+  );
+}
+
+// ─── Sprint Countdown Ring ────────────────────
+
+interface SprintCountdownProps {
+  remaining: number;
+  total: number;
+}
+
+function SprintCountdown({ remaining, total }: SprintCountdownProps) {
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const fraction = remaining / total;
+  const offset = circumference * (1 - fraction);
+
+  const isCritical = remaining <= 30;
+  const isWarning = remaining <= 60;
+
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  const label = `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+  return (
+    <div className="relative flex items-center justify-center w-14 h-14 shrink-0">
+      <svg
+        width="56"
+        height="56"
+        viewBox="0 0 56 56"
+        className="absolute inset-0 -rotate-90"
+        aria-hidden="true"
+      >
+        <circle
+          cx="28"
+          cy="28"
+          r={radius}
+          fill="none"
+          stroke="var(--color-grid-lines)"
+          strokeWidth="3"
+        />
+        <motion.circle
+          cx="28"
+          cy="28"
+          r={radius}
+          fill="none"
+          stroke={
+            isCritical
+              ? 'var(--color-error)'
+              : isWarning
+                ? '#f59e0b'
+                : 'var(--color-accent)'
+          }
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 0.5, ease: 'linear' }}
+        />
+      </svg>
+      <motion.span
+        className="relative z-10 font-mono font-bold tabular-nums"
+        style={{
+          color: isCritical
+            ? 'var(--color-error)'
+            : 'var(--color-primary-text)',
+          fontSize: '0.6rem',
+        }}
+        animate={isCritical ? { opacity: [1, 0.4, 1] } : { opacity: 1 }}
+        transition={
+          isCritical ? { repeat: Infinity, duration: 0.6 } : undefined
+        }
+      >
+        {label}
+      </motion.span>
+    </div>
+  );
+}
+
+// ─── XP Counter ───────────────────────────────
+
+interface XpCounterProps {
+  xp: number;
+}
+
+function XpCounter({ xp }: XpCounterProps) {
+  return (
+    <motion.div
+      className="flex items-center gap-1"
+      key={xp}
+      initial={{ scale: 1 }}
+      animate={{ scale: [1, 1.15, 1] }}
+      transition={{ duration: 0.2 }}
+    >
+      <span
+        className="text-xs font-black tabular-nums"
+        style={{ color: 'var(--color-accent)' }}
+      >
+        {xp}
+      </span>
+      <span
+        className="text-[0.55rem] uppercase tracking-widest font-bold"
+        style={{ color: 'var(--color-accent)', opacity: 0.6 }}
+      >
+        XP
+      </span>
+    </motion.div>
   );
 }
 
@@ -145,11 +251,34 @@ function ErrorCounter({ count, max = 3 }: ErrorCounterProps) {
   );
 }
 
+// ─── Mode Badge ───────────────────────────────
+
+function ModeBadge({ mode }: { mode: GameMode }) {
+  const labels: Record<GameMode, string> = {
+    classic: 'Classic',
+    sprint: 'Sprint',
+    fogOfWar: 'Fog of War',
+  };
+  return (
+    <span
+      className="text-[0.5rem] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full"
+      style={{
+        background: 'var(--color-grid-lines)',
+        color: 'var(--color-accent)',
+      }}
+    >
+      {labels[mode]}
+    </span>
+  );
+}
+
 // ─── Completion Overlay ───────────────────────
 
 interface CompletionOverlayProps {
   elapsed: number;
   difficulty: Difficulty;
+  mode: GameMode;
+  xp: number;
   onExit: () => void;
   onPlayAgain: () => void;
 }
@@ -157,6 +286,8 @@ interface CompletionOverlayProps {
 function CompletionOverlay({
   elapsed,
   difficulty,
+  mode,
+  xp,
   onExit,
   onPlayAgain,
 }: CompletionOverlayProps) {
@@ -197,6 +328,17 @@ function CompletionOverlay({
         >
           {difficulty} · {timeStr}
         </p>
+        {mode === 'sprint' && (
+          <motion.p
+            className="text-lg font-black tabular-nums"
+            style={{ color: 'var(--color-accent)' }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 18 }}
+          >
+            {xp} XP
+          </motion.p>
+        )}
       </motion.div>
 
       <div className="flex gap-3">
@@ -229,9 +371,92 @@ function CompletionOverlay({
   );
 }
 
+// ─── Time Up Overlay (Sprint) ─────────────────
+
+interface TimeUpOverlayProps {
+  xp: number;
+  onExit: () => void;
+  onPlayAgain: () => void;
+}
+
+function TimeUpOverlay({ xp, onExit, onPlayAgain }: TimeUpOverlayProps) {
+  return (
+    <motion.div
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6"
+      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      <motion.div
+        className="flex flex-col items-center gap-4 text-center px-8"
+        initial={{ y: 24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.15, duration: 0.5, ease: 'easeOut' }}
+      >
+        <motion.span
+          className="text-5xl"
+          style={{ color: 'var(--color-error)' }}
+          animate={{ scale: [1, 1.15, 1] }}
+          transition={{ repeat: 2, duration: 0.5 }}
+        >
+          ⏱
+        </motion.span>
+        <h2
+          className="text-2xl font-black tracking-widest uppercase"
+          style={{ color: 'var(--color-error)' }}
+        >
+          Time's Up
+        </h2>
+        <motion.p
+          className="text-lg font-black tabular-nums"
+          style={{ color: 'var(--color-accent)' }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 18 }}
+        >
+          {xp} XP
+        </motion.p>
+      </motion.div>
+
+      <div className="flex gap-3">
+        <motion.button
+          className="px-6 py-3 rounded-lg text-sm font-semibold uppercase tracking-widest"
+          style={{
+            background: 'var(--color-grid-lines)',
+            color: 'var(--color-primary-text)',
+          }}
+          whileHover={{ opacity: 0.8 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={onExit}
+        >
+          Exit
+        </motion.button>
+        <motion.button
+          className="px-6 py-3 rounded-lg text-sm font-semibold uppercase tracking-widest"
+          style={{
+            background: 'var(--color-accent)',
+            color: 'var(--color-background)',
+          }}
+          whileHover={{ opacity: 0.85 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={onPlayAgain}
+        >
+          Retry
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Main Component ──────────────────────────
 
-export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps) {
+export function GameScreen({
+  difficulty,
+  characterId,
+  mode,
+  onExit,
+}: GameScreenProps) {
   const {
     currentGrid,
     selectedCell,
@@ -239,27 +464,35 @@ export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps)
     errors,
     isComplete,
     activeTheme,
+    xp,
+    sprintTimeRemaining,
+    foggedCells,
     initGame,
     selectCell,
     fillCell,
     togglePencil,
     resetGame,
+    sprintTick,
   } = useGameState();
 
   const [elapsed, setElapsed] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [sprintTimeUp, setSprintTimeUp] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sprintRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const limit = TIME_LIMITS[difficulty];
 
   // Initialise on mount / when props change
   useEffect(() => {
-    initGame(difficulty, characterId);
+    initGame(difficulty, characterId, mode);
     setElapsed(0);
     setShowCompletion(false);
-  }, [difficulty, characterId, initGame]);
+    setSprintTimeUp(false);
+  }, [difficulty, characterId, mode, initGame]);
 
-  // Timer
+  // Classic/FogOfWar elapsed timer
   useEffect(() => {
+    if (mode === 'sprint') return;
     if (isComplete || showCompletion) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       return;
@@ -279,7 +512,33 @@ export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps)
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [currentGrid, isComplete, showCompletion, limit]);
+  }, [mode, currentGrid, isComplete, showCompletion, limit]);
+
+  // Sprint countdown timer
+  useEffect(() => {
+    if (mode !== 'sprint') return;
+    if (isComplete || showCompletion || sprintTimeUp) {
+      if (sprintRef.current) clearInterval(sprintRef.current);
+      return;
+    }
+    if (!currentGrid) return;
+
+    sprintRef.current = setInterval(() => {
+      sprintTick();
+      setElapsed((s) => s + 1);
+    }, 1000);
+
+    return () => {
+      if (sprintRef.current) clearInterval(sprintRef.current);
+    };
+  }, [mode, currentGrid, isComplete, showCompletion, sprintTimeUp, sprintTick]);
+
+  // Sprint time up detection
+  useEffect(() => {
+    if (mode === 'sprint' && sprintTimeRemaining <= 0 && currentGrid && !isComplete) {
+      setSprintTimeUp(true);
+    }
+  }, [mode, sprintTimeRemaining, currentGrid, isComplete]);
 
   // Show completion overlay after a brief pause
   useEffect(() => {
@@ -309,10 +568,11 @@ export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps)
   }, [currentGrid, selectedCell, fillCell]);
 
   const handlePlayAgain = useCallback(() => {
-    initGame(difficulty, characterId);
+    initGame(difficulty, characterId, mode);
     setElapsed(0);
     setShowCompletion(false);
-  }, [difficulty, characterId, initGame]);
+    setSprintTimeUp(false);
+  }, [difficulty, characterId, mode, initGame]);
 
   if (!currentGrid) {
     return (
@@ -359,26 +619,34 @@ export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps)
           ← Exit
         </motion.button>
 
-        {/* Character name + difficulty */}
-        <div className="flex flex-col items-center gap-0.5">
+        {/* Character name + mode + difficulty */}
+        <div className="flex flex-col items-center gap-1">
           <span
             className="text-xs font-bold uppercase tracking-widest"
             style={{ color: 'var(--color-accent)' }}
           >
             {activeTheme?.name ?? '—'}
           </span>
-          <span
-            className="text-[0.6rem] uppercase tracking-widest opacity-40"
-            style={{ color: 'var(--color-primary-text)' }}
-          >
-            {difficulty}
-          </span>
+          <div className="flex items-center gap-2">
+            <ModeBadge mode={mode} />
+            <span
+              className="text-[0.6rem] uppercase tracking-widest opacity-40"
+              style={{ color: 'var(--color-primary-text)' }}
+            >
+              {difficulty}
+            </span>
+          </div>
         </div>
 
-        {/* Right: error counter + timer */}
+        {/* Right: mode-specific HUD */}
         <div className="flex items-center gap-3">
+          {mode === 'sprint' && <XpCounter xp={xp} />}
           <ErrorCounter count={errors.size} />
-          <TimerRing elapsed={elapsed} limit={limit} />
+          {mode === 'sprint' ? (
+            <SprintCountdown remaining={sprintTimeRemaining} total={180} />
+          ) : (
+            <TimerRing elapsed={elapsed} limit={limit} />
+          )}
         </div>
       </motion.header>
 
@@ -394,6 +662,7 @@ export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps)
           selectedCell={selectedCell}
           errors={errors}
           isPencilMode={isPencilMode}
+          foggedCells={foggedCells}
           onSelectCell={selectCell}
           onFillCell={fillCell}
           onTogglePencil={togglePencil}
@@ -418,12 +687,24 @@ export function GameScreen({ difficulty, characterId, onExit }: GameScreenProps)
         </motion.button>
       </motion.main>
 
-      {/* ── Completion overlay ── */}
+      {/* ── Overlays ── */}
       <AnimatePresence>
         {showCompletion && (
           <CompletionOverlay
             elapsed={elapsed}
             difficulty={difficulty}
+            mode={mode}
+            xp={xp}
+            onExit={onExit}
+            onPlayAgain={handlePlayAgain}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {sprintTimeUp && !isComplete && (
+          <TimeUpOverlay
+            xp={xp}
             onExit={onExit}
             onPlayAgain={handlePlayAgain}
           />
