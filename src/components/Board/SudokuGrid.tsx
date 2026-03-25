@@ -157,23 +157,26 @@ export function SudokuGrid({
           const isFogged = foggedCells.has(key);
           const boxIdx = getBoxIndex(r, c);
 
+          // Box-boundary indices: columns 2,5 get heavy right; rows 2,5 get heavy bottom
+          const isBoxRight = c === 2 || c === 5;
+          const isBoxBottom = r === 2 || r === 5;
+          const isLastCol = c === 8;
+          const isLastRow = r === 8;
+
           return (
             <div
               key={key}
-              className="relative"
+              className={clsx(
+                'relative',
+                // Right borders — heavy at box boundaries
+                !isLastCol && isBoxRight && 'border-r-[3px]',
+                !isLastCol && !isBoxRight && 'border-r',
+                // Bottom borders — heavy at box boundaries
+                !isLastRow && isBoxBottom && 'border-b-[3px]',
+                !isLastRow && !isBoxBottom && 'border-b',
+              )}
               style={{
-                borderRight:
-                  c === 8
-                    ? 'none'
-                    : (c + 1) % 3 === 0
-                      ? '2px solid var(--color-grid-lines)'
-                      : '1px solid var(--color-grid-lines)',
-                borderBottom:
-                  r === 8
-                    ? 'none'
-                    : (r + 1) % 3 === 0
-                      ? '2px solid var(--color-grid-lines)'
-                      : '1px solid var(--color-grid-lines)',
+                borderColor: 'var(--color-grid-lines)',
               }}
               role="gridcell"
               aria-rowindex={r + 1}
