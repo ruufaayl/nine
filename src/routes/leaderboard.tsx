@@ -1,20 +1,48 @@
 // ──────────────────────────────────────────────
-// NINE — Leaderboard Route (Client-Side SPA)
+// NINE — Leaderboard Route (Global Rankings)
 // ──────────────────────────────────────────────
 
-import { useEffect, useState } from 'react';
+import {
+  useLoaderData,
+  type LoaderFunctionArgs,
+} from 'react-router';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 // ─── Types ──────────────────────────────────
 
-interface LeaderboardEntry {
+interface LeaderboardPlayer {
   id: string;
   username: string;
   xp: number;
   rank: string;
   gamesPlayed: number;
 }
+
+interface LeaderboardData {
+  players: LeaderboardPlayer[];
+  totalCount: number;
+}
+
+// ─── Loader ─────────────────────────────────
+
+export const loader = async (_args: LoaderFunctionArgs): Promise<Response> => {
+  try {
+    const res = await fetch('/api/leaderboard', { credentials: 'include' });
+
+    if (!res.ok) {
+      return Response.json({ players: [], totalCount: 0 } satisfies LeaderboardData);
+    }
+
+    const data = await res.json();
+    return Response.json({
+      players: data.players ?? [],
+      totalCount: data.totalCount ?? 0,
+    } satisfies LeaderboardData);
+  } catch {
+    return Response.json({ players: [], totalCount: 0 } satisfies LeaderboardData);
+  }
+};
 
 // ─── Rank Colors ────────────────────────────
 
@@ -37,6 +65,32 @@ const RANK_THRESHOLDS = [
   { name: 'Diamond',  minXp: 25000 },
   { name: 'Legend',   minXp: 50000 },
 ];
+
+// ─── Podium glow configs for top 3 ─────────
+
+const PODIUM_GLOW: Record<number, { border: string; shadow: string; label: string }> = {
+  1: {
+    border: 'rgba(251,191,36,0.35)',
+    shadow: '0 0 20px rgba(251,191,36,0.15), inset 0 0 20px rgba(251,191,36,0.04)',
+    label: '1ST',
+  },
+  2: {
+    border: 'rgba(192,192,192,0.3)',
+    shadow: '0 0 16px rgba(192,192,192,0.12), inset 0 0 16px rgba(192,192,192,0.03)',
+    label: '2ND',
+  },
+  3: {
+    border: 'rgba(205,127,50,0.3)',
+    shadow: '0 0 14px rgba(205,127,50,0.12), inset 0 0 14px rgba(205,127,50,0.03)',
+    label: '3RD',
+  },
+};
+
+const POSITION_COLORS: Record<number, string> = {
+  1: '#fbbf24',
+  2: '#c0c0c0',
+  3: '#cd7f32',
+};
 
 // ─── Rank Badge ─────────────────────────────
 
@@ -63,16 +117,14 @@ function RankBadge({ rank }: { rank: string }) {
 function Position({ index }: { index: number }) {
   const pos = index + 1;
   const isTop3 = pos <= 3;
-  const colors: Record<number, string> = {
-    1: '#fbbf24',
-    2: '#c0c0c0',
-    3: '#cd7f32',
-  };
 
   return (
     <span
-      className={clsx('text-sm font-black tabular-nums w-8 text-center', isTop3 && 'drop-shadow-sm')}
-      style={{ color: isTop3 ? colors[pos] : 'rgba(255,255,255,0.25)' }}
+      className={clsx(
+        'text-sm font-black tabular-nums w-8 text-center',
+        isTop3 && 'drop-shadow-sm',
+      )}
+      style={{ color: isTop3 ? POSITION_COLORS[pos] : 'rgba(255,255,255,0.25)' }}
     >
       {pos}
     </span>
@@ -87,7 +139,7 @@ const rowVariants = {
     opacity: 1,
     x: 0,
     transition: {
-      delay: i * 0.05,
+      delay: i * 0.04,
       duration: 0.35,
       ease: [0.25, 0.46, 0.45, 0.94] as const,
     },
@@ -97,20 +149,7 @@ const rowVariants = {
 // ─── Main Component ─────────────────────────
 
 export default function LeaderboardRoute() {
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/leaderboard', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : { entries: [] }))
-      .then((data) => {
-        setEntries(data.entries ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
-  }, []);
+  const { players, totalCount } = useLoaderData<LeaderboardData>();
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
@@ -127,30 +166,60 @@ export default function LeaderboardRoute() {
       <div className="relative z-10 max-w-2xl mx-auto px-5 py-16">
         {/* Header */}
         <motion.header
-          className="flex flex-col items-center gap-3 mb-12 select-none"
+          className="flex flex-col items-center gap-3 mb-10 select-none"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-3xl font-black tracking-tight">Leaderboard</h1>
-          <p className="text-[0.6rem] uppercase tracking-[0.3em] text-white/25">
-            Top 50 · Global Rankings
-          </p>
-          <div className="w-12 h-px bg-white/10 mt-1" />
+          <div className="w-12 h-px bg-white/10" />
         </motion.header>
 
-        {/* Loading */}
-        {loading && (
-          <motion.div
-            className="py-16 text-center text-white/30 text-sm"
-            animate={{ opacity: [0.3, 0.7, 0.3] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
+        {/* Total Registered Counter */}
+        <motion.div
+          className="flex justify-center mb-10"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+        >
+          <div
+            className={clsx(
+              'flex items-center gap-4 px-6 py-3 rounded-xl',
+              'border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm',
+            )}
           >
-            Loading rankings…
-          </motion.div>
-        )}
+            <span className="text-[0.55rem] uppercase tracking-[0.3em] text-white/25">
+              Total Registered
+            </span>
+            <span
+              className="text-xl font-black tabular-nums tracking-tight"
+              style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+            >
+              {totalCount.toLocaleString()}
+            </span>
+          </div>
+        </motion.div>
 
-        {!loading && (
+        {/* Empty State */}
+        {players.length === 0 ? (
+          <motion.div
+            className="flex flex-col items-center gap-4 py-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className="text-2xl opacity-20">◈</span>
+            <span
+              className="text-[0.65rem] uppercase tracking-[0.3em] text-white/20"
+              style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+            >
+              No Registered Sectors Found
+            </span>
+            <span className="text-[0.55rem] text-white/10 max-w-xs text-center leading-relaxed">
+              Be the first to register an account and claim your place on the global leaderboard.
+            </span>
+          </motion.div>
+        ) : (
           <>
             {/* Table Header */}
             <div className="flex items-center gap-3 px-4 pb-3 border-b border-white/[0.06]">
@@ -173,28 +242,36 @@ export default function LeaderboardRoute() {
 
             {/* Rows */}
             <div className="flex flex-col">
-              {entries.length === 0 && (
-                <div className="py-16 text-center text-white/20 text-sm">
-                  No players yet. Be the first.
-                </div>
-              )}
-              {entries.map((entry, i) => {
-                const isTop3 = i < 3;
+              {players.map((player, i) => {
+                const pos = i + 1;
+                const isTop3 = pos <= 3;
+                const podium = PODIUM_GLOW[pos];
 
                 return (
                   <motion.div
-                    key={entry.id}
+                    key={player.id}
                     custom={i}
                     variants={rowVariants}
                     initial="hidden"
                     animate="visible"
                     className={clsx(
                       'flex items-center gap-3 px-4 py-3',
-                      'border-b border-white/[0.03]',
                       'transition-colors duration-150',
                       'hover:bg-white/[0.02]',
-                      isTop3 && 'bg-white/[0.01]',
+                      !isTop3 && 'border-b border-white/[0.03]',
                     )}
+                    style={
+                      isTop3 && podium
+                        ? {
+                            border: `1px solid ${podium.border}`,
+                            borderRadius: '0.75rem',
+                            marginTop: i === 0 ? 0 : '0.375rem',
+                            marginBottom: '0.375rem',
+                            boxShadow: podium.shadow,
+                            background: 'rgba(255,255,255,0.015)',
+                          }
+                        : undefined
+                    }
                   >
                     <Position index={i} />
 
@@ -204,11 +281,11 @@ export default function LeaderboardRoute() {
                         isTop3 ? 'text-white/90' : 'text-white/60',
                       )}
                     >
-                      {entry.username}
+                      {player.username}
                     </span>
 
                     <div className="w-16 flex justify-center">
-                      <RankBadge rank={entry.rank} />
+                      <RankBadge rank={player.rank} />
                     </div>
 
                     <span
@@ -216,12 +293,16 @@ export default function LeaderboardRoute() {
                         'w-20 text-right text-sm font-bold tabular-nums',
                         isTop3 ? 'text-white/80' : 'text-white/40',
                       )}
+                      style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
                     >
-                      {entry.xp.toLocaleString()}
+                      {player.xp.toLocaleString()}
                     </span>
 
-                    <span className="w-14 text-right text-xs tabular-nums text-white/25">
-                      {entry.gamesPlayed}
+                    <span
+                      className="w-14 text-right text-xs tabular-nums text-white/25"
+                      style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+                    >
+                      {player.gamesPlayed}
                     </span>
                   </motion.div>
                 );

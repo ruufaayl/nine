@@ -16,7 +16,7 @@ import ProfileRoute, {
   action as profileAction,
   ErrorBoundary as ProfileErrorBoundary,
 } from './routes/profile';
-import LeaderboardRoute from './routes/leaderboard';
+import LeaderboardRoute, { loader as leaderboardLoader } from './routes/leaderboard';
 
 // ── Data Router (supports loaders + actions) ──
 
@@ -40,7 +40,7 @@ const router = createBrowserRouter([
         action: profileAction,
         errorElement: <ProfileErrorBoundary />,
       },
-      { path: 'leaderboard', element: <LeaderboardRoute /> },
+      { path: 'leaderboard', element: <LeaderboardRoute />, loader: leaderboardLoader },
     ],
   },
 ]);
