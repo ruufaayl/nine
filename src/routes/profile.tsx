@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// NINE — Profile Dashboard Route
+// NINE — Profile Dashboard Route (client-side)
 // ──────────────────────────────────────────────
 
 import {
@@ -15,14 +15,6 @@ import {
 } from 'react-router';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-import {
-  getUserFromRequest,
-  getSessionIdFromRequest,
-  getRecentScores,
-  destroyGuestData,
-  destroySession,
-  clearSessionCookie,
-} from '../lib/auth.server';
 
 // ─── Rank Colors ────────────────────────────
 
@@ -36,54 +28,61 @@ const RANK_COLORS: Record<string, { color: string; glow: string }> = {
   Legend:   { color: '#f472b6', glow: '0 0 12px rgba(244,114,182,0.6)' },
 };
 
-// ─── Loader ─────────────────────────────────
+// ─── Loader (fetch-based) ───────────────────
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUserFromRequest(request);
+export const loader = async (_args: LoaderFunctionArgs) => {
+  const res = await fetch('/api/me');
 
-  if (!user) {
+  if (!res.ok) {
     return redirect('/auth');
   }
 
-  const recentScores = await getRecentScores(user.id, 10);
+  const data = await res.json();
+
+  if (!data.user) {
+    return redirect('/auth');
+  }
+
+  // Fetch recent scores
+  let recentScores: Array<{
+    id: string;
+    modeId: string;
+    score: number;
+    timeMs: number;
+    createdAt: string;
+  }> = [];
+
+  try {
+    const scoresRes = await fetch(`/api/profile/scores`);
+    if (scoresRes.ok) {
+      const scoresData = await scoresRes.json();
+      recentScores = scoresData.scores ?? [];
+    }
+  } catch {
+    // Scores unavailable — continue without them
+  }
 
   return Response.json({
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      rank: user.rank,
-      xp: user.xp,
-      isGuest: user.isGuest,
-      createdAt: user.createdAt,
-    },
+    user: data.user,
     recentScores,
   });
 };
 
-// ─── Action (Logout) ────────────────────────
+// ─── Action (Logout — fetch-based) ──────────
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get('intent') as string;
 
   if (intent === 'logout') {
-    const user = await getUserFromRequest(request);
-    const sessionId = getSessionIdFromRequest(request);
-
-    // If guest → wipe all data permanently
-    if (user?.isGuest) {
-      await destroyGuestData(user.id);
-    }
-
-    // Destroy session row
-    if (sessionId) {
-      await destroySession(sessionId);
-    }
-
-    return redirect('/auth', {
-      headers: { 'Set-Cookie': clearSessionCookie() },
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent: 'logout' }),
     });
+
+    // Even if server fails, redirect to auth
+    return redirect('/auth');
   }
 
   return Response.json({ error: 'Invalid action.' }, { status: 400 });

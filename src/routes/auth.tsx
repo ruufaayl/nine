@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// NINE — Auth Route (server-backed action)
+// NINE — Auth Route (client-side, fetch-based)
 // ──────────────────────────────────────────────
 
 import {
@@ -11,20 +11,45 @@ import {
 } from 'react-router';
 import { motion } from 'framer-motion';
 import { AuthScreen } from '../components/Auth/AuthScreen';
-import {
-  createUser,
-  createGuestUser,
-  createSession,
-  verifyLogin,
-  validateLogin,
-  validateSignup,
-  generatePasswordResetToken,
-  serializeSessionCookie,
-  type AuthErrors,
-} from '../lib/auth.server';
+
+// ─── Types ──────────────────────────────────
+
+interface AuthErrors {
+  form?: string;
+  email?: string;
+  password?: string;
+  username?: string;
+}
+
+// ─── Client-side validation (mirrors server) ─
+
+function validateLogin(email: string, password: string): AuthErrors | null {
+  const errors: AuthErrors = {};
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    errors.email = 'A valid email is required.';
+  }
+  if (!password || password.length < 6) {
+    errors.password = 'Password must be at least 6 characters.';
+  }
+  return Object.keys(errors).length > 0 ? errors : null;
+}
+
+function validateSignup(username: string, email: string, password: string): AuthErrors | null {
+  const errors: AuthErrors = {};
+  if (!username || username.trim().length < 2) {
+    errors.username = 'Username must be at least 2 characters.';
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    errors.email = 'A valid email is required.';
+  }
+  if (!password || password.length < 6) {
+    errors.password = 'Password must be at least 6 characters.';
+  }
+  return Object.keys(errors).length > 0 ? errors : null;
+}
 
 // ─── Action ─────────────────────────────────
-// Handles intent = login | signup | guest | reset_password
+// Posts to the server-side API route via fetch.
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
@@ -40,19 +65,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return Response.json({ errors: validationErrors }, { status: 400 });
     }
 
-    const user = await verifyLogin(email, password);
-    if (!user) {
-      return Response.json(
-        { errors: { form: 'Invalid credentials.' } satisfies AuthErrors },
-        { status: 400 },
-      );
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent: 'login', email, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return Response.json({ errors: data.errors ?? { form: 'Login failed.' } }, { status: 400 });
     }
 
-    const sessionId = await createSession(user.id);
-
-    return redirect('/', {
-      headers: { 'Set-Cookie': serializeSessionCookie(sessionId) },
-    });
+    return redirect('/');
   }
 
   // ── SIGNUP ──
@@ -66,55 +91,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return Response.json({ errors: validationErrors }, { status: 400 });
     }
 
-    try {
-      const user = await createUser(username, email, password);
-      const sessionId = await createSession(user.id);
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent: 'signup', username, email, password }),
+    });
 
-      return redirect('/', {
-        headers: { 'Set-Cookie': serializeSessionCookie(sessionId) },
-      });
-    } catch (error: unknown) {
-      const pgError = error as { code?: string; detail?: string };
+    const data = await res.json();
 
-      if (pgError.code === '23505') {
-        const detail = pgError.detail?.toLowerCase() ?? '';
-        if (detail.includes('email')) {
-          return Response.json(
-            { errors: { email: 'Email already in use.' } satisfies AuthErrors },
-            { status: 400 },
-          );
-        }
-        if (detail.includes('username')) {
-          return Response.json(
-            { errors: { username: 'Username taken.' } satisfies AuthErrors },
-            { status: 400 },
-          );
-        }
-        return Response.json(
-          { errors: { form: 'Account already exists.' } satisfies AuthErrors },
-          { status: 400 },
-        );
-      }
-
-      throw error;
+    if (!res.ok) {
+      return Response.json({ errors: data.errors ?? { form: 'Signup failed.' } }, { status: 400 });
     }
+
+    return redirect('/');
   }
 
   // ── GUEST ──
   if (intent === 'guest') {
-    try {
-      const guest = await createGuestUser();
-      const sessionId = await createSession(guest.id);
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent: 'guest' }),
+    });
 
-      return redirect('/', {
-        headers: { 'Set-Cookie': serializeSessionCookie(sessionId) },
-      });
-    } catch {
+    if (!res.ok) {
       return Response.json(
         { errors: { form: 'Failed to create guest session. Please try again.' } },
         { status: 500 },
       );
     }
+
+    return redirect('/');
   }
 
   // ── RESET PASSWORD ──
@@ -128,9 +135,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       );
     }
 
-    const result = await generatePasswordResetToken(email);
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent: 'reset_password', email }),
+    });
 
-    return Response.json({ success: result.message });
+    const data = await res.json();
+
+    if (!res.ok) {
+      return Response.json({ errors: data.errors ?? { form: 'Request failed.' } }, { status: 400 });
+    }
+
+    return Response.json({ success: data.message ?? 'Reset email sent.' });
   }
 
   // ── UNKNOWN INTENT ──
