@@ -55,8 +55,16 @@ interface MatchOverPayload {
 
 // ─── Constants ──────────────────────────────
 
+/**
+ * Resolve the WebSocket URL.
+ * In production (Vercel), always use the secure Nginx proxy.
+ * In dev, fall back to the raw Droplet IP for local testing.
+ */
 const WS_URL: string =
-  import.meta.env.VITE_WS_URL || 'http://68.183.186.126:3001';
+  import.meta.env.VITE_WS_URL ||
+  (import.meta.env.PROD
+    ? 'https://nine.zaiyra.me'
+    : 'http://68.183.186.126:3001');
 
 // ─── Guest ID Generator ─────────────────────
 
