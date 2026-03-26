@@ -1,19 +1,21 @@
 // ──────────────────────────────────────────────
-// NINE — Auth Form Component (Client-Side SPA)
+// NINE — Auth Form Component (uses RR7 <Form>)
 // ──────────────────────────────────────────────
 
-import { useCallback, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { useCallback, useState } from 'react';
+import { Form, useActionData, useNavigation } from 'react-router';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import clsx from 'clsx';
 
 // ─── Types ──────────────────────────────────
 
-interface AuthErrors {
-  username?: string;
-  email?: string;
-  password?: string;
-  form?: string;
+interface ActionData {
+  errors?: {
+    username?: string;
+    email?: string;
+    password?: string;
+    form?: string;
+  };
 }
 
 // ─── Animation Variants ─────────────────────
@@ -49,9 +51,8 @@ interface AuthInputProps {
   type: string;
   label: string;
   placeholder: string;
-  value: string;
-  onChange: (v: string) => void;
   error?: string;
+  required?: boolean;
   autoComplete?: string;
 }
 
@@ -60,9 +61,8 @@ function AuthInput({
   type,
   label,
   placeholder,
-  value,
-  onChange,
   error,
+  required,
   autoComplete,
 }: AuthInputProps) {
   return (
@@ -78,9 +78,7 @@ function AuthInput({
         name={name}
         type={type}
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required
+        required={required}
         autoComplete={autoComplete}
         className={clsx(
           'w-full px-4 py-3 rounded-lg text-sm font-medium',
@@ -109,58 +107,18 @@ function AuthInput({
 // ─── Component ──────────────────────────────
 
 export function AuthForm() {
-  const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<AuthErrors | null>(null);
+  const actionData = useActionData<ActionData>();
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === 'submitting';
 
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
+  const errors = actionData?.errors;
   const hasFormError = !!errors?.form;
   const isSignup = mode === 'signup';
 
   const toggleMode = useCallback(() => {
     setMode((m) => (m === 'login' ? 'signup' : 'login'));
-    setErrors(null);
   }, []);
-
-  const handleSubmit = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
-      setErrors(null);
-      setIsSubmitting(true);
-
-      try {
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            intent: mode,
-            email,
-            password,
-            ...(isSignup ? { username } : {}),
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || data.errors) {
-          setErrors(data.errors ?? { form: 'Something went wrong.' });
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Success — redirect to lobby
-        navigate('/');
-      } catch {
-        setErrors({ form: 'Network error. Please try again.' });
-        setIsSubmitting(false);
-      }
-    },
-    [mode, email, password, username, isSignup, navigate],
-  );
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-[#0a0a0f]">
@@ -213,8 +171,11 @@ export function AuthForm() {
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Form — submits to /auth action */}
+          <Form method="post" action="/auth" className="flex flex-col gap-4">
+            {/* Hidden intent field */}
+            <input type="hidden" name="intent" value={mode} />
+
             {/* Username — only on signup */}
             <AnimatePresence initial={false}>
               {isSignup && (
@@ -230,9 +191,8 @@ export function AuthForm() {
                     type="text"
                     label="Username"
                     placeholder="agent_codename"
-                    value={username}
-                    onChange={setUsername}
                     error={errors?.username}
+                    required
                     autoComplete="username"
                   />
                 </motion.div>
@@ -244,9 +204,8 @@ export function AuthForm() {
               type="email"
               label="Email"
               placeholder="operative@nine.io"
-              value={email}
-              onChange={setEmail}
               error={errors?.email}
+              required
               autoComplete="email"
             />
 
@@ -255,9 +214,8 @@ export function AuthForm() {
               type="password"
               label="Password"
               placeholder="••••••••"
-              value={password}
-              onChange={setPassword}
               error={errors?.password}
+              required
               autoComplete={isSignup ? 'new-password' : 'current-password'}
             />
 
@@ -296,7 +254,7 @@ export function AuthForm() {
                   ? 'Create Account'
                   : 'Log In'}
             </motion.button>
-          </form>
+          </Form>
 
           {/* Toggle */}
           <div className="flex justify-center">
