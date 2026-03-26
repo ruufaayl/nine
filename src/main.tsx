@@ -7,7 +7,7 @@ import {
 import './index.css';
 
 // ── Route imports ──
-import RootLayout from './routes/root';
+import RootLayout, { loader as rootLoader } from './routes/root';
 import Home from './routes/home';
 import PlayRoute from './routes/play';
 import AuthRoute, { action as authAction, ErrorBoundary as AuthErrorBoundary } from './routes/auth';
@@ -23,6 +23,7 @@ import LeaderboardRoute from './routes/leaderboard';
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    loader: rootLoader,
     children: [
       { index: true, element: <Home /> },
       { path: 'play/:modeId', element: <PlayRoute /> },

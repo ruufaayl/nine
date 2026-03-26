@@ -55,14 +55,8 @@ interface MatchOverPayload {
 
 // ─── Constants ──────────────────────────────
 
-const WS_URL = (() => {
-  try {
-    const meta = import.meta as unknown as { env?: Record<string, string> };
-    return meta.env?.VITE_WS_URL ?? 'http://localhost:3001';
-  } catch {
-    return 'http://localhost:3001';
-  }
-})();
+const WS_URL: string =
+  import.meta.env.VITE_WS_URL || 'http://68.183.186.123:3001';
 
 // ─── Guest ID Generator ─────────────────────
 

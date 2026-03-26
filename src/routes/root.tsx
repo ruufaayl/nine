@@ -2,8 +2,12 @@
 // NINE — Root Layout (wraps all routes)
 // ──────────────────────────────────────────────
 
-import { Outlet, useOutletContext } from 'react-router';
-import { useEffect, useState } from 'react';
+import {
+  Outlet,
+  useLoaderData,
+  useOutletContext,
+  type LoaderFunctionArgs,
+} from 'react-router';
 import { Header, type HeaderUser } from '../components/Layout/Header';
 
 // ─── Types ──────────────────────────────────
@@ -11,6 +15,28 @@ import { Header, type HeaderUser } from '../components/Layout/Header';
 export interface RootContext {
   user: HeaderUser | null;
 }
+
+interface RootLoaderData {
+  user: HeaderUser | null;
+}
+
+// ─── Loader (runs before render — no "loading" flash) ──
+
+export const loader = async (_args: LoaderFunctionArgs): Promise<Response> => {
+  try {
+    const res = await fetch('/api/me', { credentials: 'include' });
+
+    if (!res.ok) {
+      return Response.json({ user: null } satisfies RootLoaderData);
+    }
+
+    const data = await res.json();
+    return Response.json({ user: data?.user ?? null } satisfies RootLoaderData);
+  } catch {
+    // Network error — treat as unauthenticated
+    return Response.json({ user: null } satisfies RootLoaderData);
+  }
+};
 
 // ─── Hook for child routes ──────────────────
 
@@ -22,24 +48,7 @@ export function useUser(): HeaderUser | null {
 // ─── Component ──────────────────────────────
 
 export default function RootLayout() {
-  const [user, setUser] = useState<HeaderUser | null>(null);
-
-  // Try to fetch the current session on mount
-  useEffect(() => {
-    fetch('/api/me', { credentials: 'include' })
-      .then((res) => {
-        if (!res.ok) return null;
-        return res.json();
-      })
-      .then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-        }
-      })
-      .catch(() => {
-        // Not logged in — that's fine
-      });
-  }, []);
+  const { user } = useLoaderData<RootLoaderData>();
 
   return (
     <>
