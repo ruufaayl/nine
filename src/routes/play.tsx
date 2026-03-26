@@ -95,7 +95,7 @@ export default function PlayRoute() {
       case 'prime-grid':
         return <PrimeGrid onExit={goToLobby} />;
       case 'race':
-        return <RaceMode userId="guest" onExit={goToLobby} />;
+        return <RaceMode onExit={goToLobby} />;
       default:
         return <ModePlaceholder modeId={modeId ?? 'unknown'} onExit={goToLobby} />;
     }

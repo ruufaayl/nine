@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import clsx from 'clsx';
-import { useRaceMode } from '../../hooks/useRaceMode';
+import { useRaceMode, type RaceModeUser } from '../../hooks/useRaceMode';
 import { useGameState } from '../../hooks/useGameState';
 import { SudokuGrid } from '../Board/SudokuGrid';
 import { NumberPad } from '../Board/NumberPad';
@@ -15,7 +15,7 @@ import { getBoxIndex } from '../../lib/sudoku';
 // ─── Types ──────────────────────────────────
 
 interface RaceModeProps {
-  userId: string;
+  user?: RaceModeUser | null;
   onExit: () => void;
 }
 
@@ -182,7 +182,7 @@ function ResultOverlay({ result, elapsed, xp, onExit, onRematch }: ResultOverlay
 
 // ─── Main Component ─────────────────────────
 
-export function RaceMode({ userId, onExit }: RaceModeProps) {
+export function RaceMode({ user, onExit }: RaceModeProps) {
   const {
     matchState,
     matchResult,
@@ -197,7 +197,7 @@ export function RaceMode({ userId, onExit }: RaceModeProps) {
     sendBoxComplete,
     sendGameWon,
     resetRace,
-  } = useRaceMode(userId);
+  } = useRaceMode(user);
 
   const {
     currentGrid,

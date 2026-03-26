@@ -152,7 +152,7 @@ export function PrimeGrid({ onExit }: PrimeGridProps) {
 
   // ── PvP Race ──
   if (variant === 'pvp-race') {
-    return <RaceMode userId="guest" onExit={goToMenu} />;
+    return <RaceMode onExit={goToMenu} />;
   }
 
   // ── Menu ──

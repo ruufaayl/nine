@@ -22,6 +22,11 @@ export interface MatchInfo {
   opponentId: string;
 }
 
+export interface RaceModeUser {
+  id: string;
+  username: string;
+}
+
 interface MatchStartedPayload {
   roomId: string;
   modeId: string;
@@ -59,10 +64,32 @@ const WS_URL = (() => {
   }
 })();
 
+// ─── Guest ID Generator ─────────────────────
+
+function generateGuestId(): string {
+  return `guest_${crypto.randomUUID()}`;
+}
+
 // ─── Hook ───────────────────────────────────
 
-export function useRaceMode(userId: string) {
+export function useRaceMode(user?: RaceModeUser | null) {
   const socketRef = useRef<Socket | null>(null);
+  const guestIdRef = useRef<string | null>(null);
+
+  /**
+   * Resolve the userId to send in socket events.
+   * If user is authenticated, use their real ID.
+   * If guest, generate a stable guest UUID for the session.
+   */
+  const resolveUserId = useCallback((): string => {
+    if (user?.id) return user.id;
+
+    if (!guestIdRef.current) {
+      guestIdRef.current = generateGuestId();
+      console.log('[nine-ws] Generated guest ID:', guestIdRef.current);
+    }
+    return guestIdRef.current;
+  }, [user]);
 
   // ── State ──
   const [matchState, setMatchState] = useState<MatchState>('idle');
@@ -75,6 +102,8 @@ export function useRaceMode(userId: string) {
 
   // ── Connect on mount ──
   useEffect(() => {
+    console.log('[nine-ws] Connecting to:', WS_URL);
+
     const socket = io(WS_URL, {
       transports: ['websocket'],
       autoConnect: true,
@@ -85,8 +114,29 @@ export function useRaceMode(userId: string) {
 
     socketRef.current = socket;
 
+    // ── connect ──
+    socket.on('connect', () => {
+      console.log('[nine-ws] ✓ Connected. Socket ID:', socket.id);
+    });
+
+    // ── connect_error ──
+    socket.on('connect_error', (err) => {
+      console.error('[nine-ws] ✗ Connection error:', err.message);
+    });
+
+    // ── disconnect ──
+    socket.on('disconnect', (reason) => {
+      console.log('[nine-ws] Disconnected. Reason:', reason);
+    });
+
     // ── match_started ──
     socket.on('match_started', (data: MatchStartedPayload) => {
+      console.log('[nine-ws] 🎮 Match started!', {
+        roomId: data.roomId,
+        modeId: data.modeId,
+        players: data.players.map((p) => p.userId),
+      });
+
       const opponent = data.players.find((p) => p.socketId !== socket.id);
 
       setMatchInfo({
@@ -111,31 +161,34 @@ export function useRaceMode(userId: string) {
 
     // ── ghost_flash ──
     socket.on('ghost_flash', (data: GhostFlashPayload) => {
+      console.log('[nine-ws] ⚡ Opponent completed box:', data.boxIndex);
       setOpponentBoxCompletions((prev) => [...prev, data.boxIndex]);
       setLatestBoxFlash(data.boxIndex);
-
-      // Clear flash after animation
       setTimeout(() => setLatestBoxFlash(null), 600);
     });
 
     // ── match_over ──
     socket.on('match_over', (data: MatchOverPayload) => {
       const didWin = data.winnerSocketId === socket.id;
+      console.log('[nine-ws] 🏁 Match over!', didWin ? 'YOU WON' : 'YOU LOST', data);
       setMatchResult(didWin ? 'won' : 'lost');
       setMatchState('finished');
     });
 
     // ── match_cancelled ──
     socket.on('match_cancelled', () => {
+      console.log('[nine-ws] Match cancelled');
       setMatchState('idle');
     });
 
     // ── queue_joined ──
     socket.on('queue_joined', () => {
+      console.log('[nine-ws] ✓ In queue. Searching for opponent...');
       setMatchState('searching');
     });
 
     return () => {
+      console.log('[nine-ws] Cleaning up socket.');
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;
@@ -147,20 +200,26 @@ export function useRaceMode(userId: string) {
   const findMatch = useCallback(
     (modeId: string) => {
       if (!socketRef.current) return;
+
+      const finalUserId = resolveUserId();
+
+      console.log('[nine-ws] Finding match...', { userId: finalUserId, modeId });
+
       setMatchState('searching');
       setMatchResult(null);
       setOpponentProgress([]);
       setOpponentBoxCompletions([]);
-      socketRef.current.emit('find_match', { userId, modeId });
+      socketRef.current.emit('find_match', { userId: finalUserId, modeId });
     },
-    [userId],
+    [resolveUserId],
   );
 
   const cancelMatch = useCallback(() => {
     if (!socketRef.current) return;
-    socketRef.current.emit('cancel_match', { userId });
+    const finalUserId = resolveUserId();
+    socketRef.current.emit('cancel_match', { userId: finalUserId });
     setMatchState('idle');
-  }, [userId]);
+  }, [resolveUserId]);
 
   const sendCellFill = useCallback(
     (row: number, col: number) => {

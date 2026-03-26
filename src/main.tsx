@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import './index.css';
+import RootLayout from './routes/root';
 import Home from './routes/home';
 import PlayRoute from './routes/play';
 
@@ -12,8 +13,10 @@ createRoot(root).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route index element={<Home />} />
-        <Route path="play/:modeId" element={<PlayRoute />} />
+        <Route element={<RootLayout />}>
+          <Route index element={<Home />} />
+          <Route path="play/:modeId" element={<PlayRoute />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   </StrictMode>,
