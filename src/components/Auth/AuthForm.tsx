@@ -237,6 +237,7 @@ export function AuthForm() {
 
             {/* Submit */}
             <motion.button
+              id="auth-submit"
               type="submit"
               disabled={isSubmitting}
               className={clsx(
