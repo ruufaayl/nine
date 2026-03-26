@@ -13,6 +13,7 @@ import { LexiconWeave } from '../components/Games/LexiconWeave';
 import { CanvasFracture } from '../components/Games/CanvasFracture';
 import { ShatteredGrid } from '../components/Games/ShatteredGrid';
 import { RaceMode } from '../components/Games/RaceMode';
+import { PrimeGrid } from '../components/Games/PrimeGrid';
 import { THEMES } from '../lib/themes';
 import type React from 'react';
 
@@ -91,6 +92,8 @@ export default function PlayRoute() {
         return <CanvasFracture onExit={goToLobby} />;
       case 'shattered-grid':
         return <ShatteredGrid onExit={goToLobby} />;
+      case 'prime-grid':
+        return <PrimeGrid onExit={goToLobby} />;
       case 'race':
         return <RaceMode userId="guest" onExit={goToLobby} />;
       default:
