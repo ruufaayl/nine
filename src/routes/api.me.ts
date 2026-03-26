@@ -18,6 +18,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       username: user.username,
       rank: user.rank,
       xp: user.xp,
+      isGuest: user.isGuest,
     },
   });
 }

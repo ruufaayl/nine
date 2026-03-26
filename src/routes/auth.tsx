@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// NINE — Auth Route (self-contained action)
+// NINE — Auth Route (server-backed action)
 // ──────────────────────────────────────────────
 
 import {
@@ -10,65 +10,134 @@ import {
   type ActionFunctionArgs,
 } from 'react-router';
 import { motion } from 'framer-motion';
-import { AuthForm } from '../components/Auth/AuthForm';
+import { AuthScreen } from '../components/Auth/AuthScreen';
+import {
+  createUser,
+  createGuestUser,
+  createSession,
+  verifyLogin,
+  validateLogin,
+  validateSignup,
+  generatePasswordResetToken,
+  serializeSessionCookie,
+  type AuthErrors,
+} from '../lib/auth.server';
 
 // ─── Action ─────────────────────────────────
-// Fired by <Form method="post" action="/auth">
-// Runs entirely in the browser (client-side data router).
-// No server fetch — validates + stores session locally.
+// Handles intent = login | signup | guest | reset_password
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const intent = formData.get('intent') as string;
-  const email = (formData.get('email') as string) ?? '';
-  const password = (formData.get('password') as string) ?? '';
-  const username = (formData.get('username') as string) ?? '';
 
-  // ── Validation ──
-  const errors: Record<string, string> = {};
+  // ── LOGIN ──
+  if (intent === 'login') {
+    const email = (formData.get('email') as string) ?? '';
+    const password = (formData.get('password') as string) ?? '';
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-    errors.email = 'A valid email is required.';
+    const validationErrors = validateLogin(email, password);
+    if (validationErrors) {
+      return Response.json({ errors: validationErrors }, { status: 400 });
+    }
+
+    const user = await verifyLogin(email, password);
+    if (!user) {
+      return Response.json(
+        { errors: { form: 'Invalid credentials.' } satisfies AuthErrors },
+        { status: 400 },
+      );
+    }
+
+    const sessionId = await createSession(user.id);
+
+    return redirect('/', {
+      headers: { 'Set-Cookie': serializeSessionCookie(sessionId) },
+    });
   }
-  if (!password || password.length < 8) {
-    errors.password = 'Password must be at least 8 characters.';
-  }
+
+  // ── SIGNUP ──
   if (intent === 'signup') {
-    if (!username || username.trim().length < 3) {
-      errors.username = 'Username must be at least 3 characters.';
+    const username = (formData.get('username') as string) ?? '';
+    const email = (formData.get('email') as string) ?? '';
+    const password = (formData.get('password') as string) ?? '';
+
+    const validationErrors = validateSignup(username, email, password);
+    if (validationErrors) {
+      return Response.json({ errors: validationErrors }, { status: 400 });
     }
-    if (username.trim().length > 32) {
-      errors.username = 'Username must be 32 characters or fewer.';
+
+    try {
+      const user = await createUser(username, email, password);
+      const sessionId = await createSession(user.id);
+
+      return redirect('/', {
+        headers: { 'Set-Cookie': serializeSessionCookie(sessionId) },
+      });
+    } catch (error: unknown) {
+      const pgError = error as { code?: string; detail?: string };
+
+      if (pgError.code === '23505') {
+        const detail = pgError.detail?.toLowerCase() ?? '';
+        if (detail.includes('email')) {
+          return Response.json(
+            { errors: { email: 'Email already in use.' } satisfies AuthErrors },
+            { status: 400 },
+          );
+        }
+        if (detail.includes('username')) {
+          return Response.json(
+            { errors: { username: 'Username taken.' } satisfies AuthErrors },
+            { status: 400 },
+          );
+        }
+        return Response.json(
+          { errors: { form: 'Account already exists.' } satisfies AuthErrors },
+          { status: 400 },
+        );
+      }
+
+      throw error;
     }
   }
 
-  if (Object.keys(errors).length > 0) {
-    return Response.json({ errors }, { status: 400 });
+  // ── GUEST ──
+  if (intent === 'guest') {
+    try {
+      const guest = await createGuestUser();
+      const sessionId = await createSession(guest.id);
+
+      return redirect('/', {
+        headers: { 'Set-Cookie': serializeSessionCookie(sessionId) },
+      });
+    } catch {
+      return Response.json(
+        { errors: { form: 'Failed to create guest session. Please try again.' } },
+        { status: 500 },
+      );
+    }
   }
 
-  // ── Session ──
-  // In SPA mode we store a lightweight session in localStorage.
-  // When the server-side API is deployed, this block will be
-  // replaced with a real fetch to /api/auth.
-  try {
-    const guestUser = {
-      id: crypto.randomUUID(),
-      username: intent === 'signup' ? username.trim() : email.split('@')[0],
-      email: email.trim().toLowerCase(),
-      rank: 'Stone',
-      xp: 0,
-      createdAt: Date.now(),
-    };
+  // ── RESET PASSWORD ──
+  if (intent === 'reset_password') {
+    const email = (formData.get('email') as string) ?? '';
 
-    localStorage.setItem('nine_session', JSON.stringify(guestUser));
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return Response.json(
+        { errors: { email: 'A valid email is required.' } },
+        { status: 400 },
+      );
+    }
 
-    return redirect('/');
-  } catch {
-    return Response.json(
-      { errors: { form: 'Something went wrong. Please try again.' } },
-      { status: 500 },
-    );
+    const result = await generatePasswordResetToken(email);
+
+    return Response.json({ success: result.message });
   }
+
+  // ── UNKNOWN INTENT ──
+  return Response.json(
+    { errors: { form: 'Invalid request.' } },
+    { status: 400 },
+  );
 };
 
 // ─── Error Boundary ─────────────────────────
@@ -79,7 +148,6 @@ export function ErrorBoundary() {
 
   console.error('[auth] Route error:', error);
 
-  // Extract a human-readable message
   let detail = 'An unknown error occurred.';
   if (isRouteErrorResponse(error)) {
     detail = `${error.status} — ${error.statusText || 'Unexpected response'}`;
@@ -112,7 +180,6 @@ export function ErrorBoundary() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Pulsing icon */}
         <motion.span
           style={{ fontSize: '3rem', opacity: 0.4 }}
           animate={{ opacity: [0.3, 0.5, 0.3] }}
@@ -145,7 +212,6 @@ export function ErrorBoundary() {
           issue with the server connection.
         </p>
 
-        {/* Error detail (collapsed) */}
         <details style={{ width: '100%', textAlign: 'left' }}>
           <summary
             style={{
@@ -177,7 +243,6 @@ export function ErrorBoundary() {
           </pre>
         </details>
 
-        {/* Actions */}
         <div style={{ display: 'flex', gap: '0.75rem', width: '100%', marginTop: '0.5rem' }}>
           <motion.button
             style={{
@@ -228,5 +293,5 @@ export function ErrorBoundary() {
 // ─── Component ──────────────────────────────
 
 export default function AuthRoute() {
-  return <AuthForm />;
+  return <AuthScreen />;
 }

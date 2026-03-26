@@ -13,6 +13,7 @@ export interface HeaderUser {
   username: string;
   rank: string;
   xp: number;
+  isGuest?: boolean;
 }
 
 interface HeaderProps {
@@ -74,9 +75,12 @@ export function Header({ user }: HeaderProps) {
 
         {user ? (
           /* ── Authenticated ── */
-          <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-3 outline-none group"
+          >
             {/* XP */}
-            <span className="text-[0.6rem] font-bold tabular-nums text-white/30">
+            <span className="text-[0.6rem] font-bold tabular-nums text-white/30 group-hover:text-white/50 transition-colors">
               {user.xp.toLocaleString()}
               <span className="text-[0.45rem] uppercase tracking-widest ml-0.5 opacity-50">
                 xp
@@ -95,13 +99,20 @@ export function Header({ user }: HeaderProps) {
               {user.rank}
             </span>
 
-            {/* Username */}
-            <span className="text-xs font-semibold text-white/70 max-w-[100px] truncate">
-              {user.username}
+            {/* Username + Guest badge */}
+            <span className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-white/70 max-w-[100px] truncate group-hover:text-white/90 transition-colors">
+                {user.username}
+              </span>
+              {user.isGuest && (
+                <span className="text-[0.4rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400/60">
+                  Guest
+                </span>
+              )}
             </span>
-          </div>
+          </button>
         ) : (
-          /* ── Guest ── */
+          /* ── Not authenticated ── */
           <motion.button
             onClick={() => navigate('/auth')}
             className={clsx(

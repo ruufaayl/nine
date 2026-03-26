@@ -6,11 +6,16 @@ import {
 } from 'react-router';
 import './index.css';
 
-// ── Lazy imports for route components ──
+// ── Route imports ──
 import RootLayout from './routes/root';
 import Home from './routes/home';
 import PlayRoute from './routes/play';
 import AuthRoute, { action as authAction, ErrorBoundary as AuthErrorBoundary } from './routes/auth';
+import ProfileRoute, {
+  loader as profileLoader,
+  action as profileAction,
+  ErrorBoundary as ProfileErrorBoundary,
+} from './routes/profile';
 import LeaderboardRoute from './routes/leaderboard';
 
 // ── Data Router (supports loaders + actions) ──
@@ -26,6 +31,13 @@ const router = createBrowserRouter([
         element: <AuthRoute />,
         action: authAction,
         errorElement: <AuthErrorBoundary />,
+      },
+      {
+        path: 'profile',
+        element: <ProfileRoute />,
+        loader: profileLoader,
+        action: profileAction,
+        errorElement: <ProfileErrorBoundary />,
       },
       { path: 'leaderboard', element: <LeaderboardRoute /> },
     ],

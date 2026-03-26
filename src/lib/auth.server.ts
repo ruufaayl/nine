@@ -2,16 +2,18 @@
 // NINE — Auth Server Utilities (.server = never bundled to client)
 // ──────────────────────────────────────────────
 
+import crypto from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { db } from '../db';
-import { users, sessions } from '../db/schema';
+import { users, sessions, scores, passwordResets } from '../db/schema';
 import type { User } from '../db/schema';
 
 // ─── Constants ──────────────────────────────
 
 const SALT_ROUNDS = 12;
 const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 const COOKIE_NAME = '__nine_session';
 
 // ─── Public User Type (omits sensitive fields) ──
@@ -38,10 +40,38 @@ export async function createUser(
       username: username.trim(),
       email: email.trim().toLowerCase(),
       passwordHash,
+      isGuest: false,
     })
     .returning();
 
   return toSafeUser(user);
+}
+
+// ─── Create Guest User ─────────────────────
+
+export async function createGuestUser(): Promise<SafeUser> {
+  const hex = crypto.randomBytes(2).toString('hex'); // 4 hex chars
+  const alias = `Guest_${hex}`;
+  const fakeEmail = `guest_${hex}_${Date.now()}@nine.local`;
+
+  const [user] = await db
+    .insert(users)
+    .values({
+      username: alias,
+      email: fakeEmail,
+      passwordHash: '', // no password for guests
+      isGuest: true,
+    })
+    .returning();
+
+  return toSafeUser(user);
+}
+
+// ─── Destroy Guest Data ────────────────────
+
+export async function destroyGuestData(userId: string): Promise<void> {
+  // CASCADE on scores + sessions handles child rows automatically
+  await db.delete(users).where(eq(users.id, userId));
 }
 
 // ─── Verify Login ───────────────────────────
@@ -58,10 +88,59 @@ export async function verifyLogin(
 
   if (!user) return null;
 
+  // Guest accounts cannot log in with passwords
+  if (user.isGuest) return null;
+
+  // Empty hash = no password set (shouldn't happen for non-guests)
+  if (!user.passwordHash) return null;
+
   const isValid = await bcrypt.compare(password, user.passwordHash);
   if (!isValid) return null;
 
   return toSafeUser(user);
+}
+
+// ─── Password Reset ─────────────────────────
+
+export async function generatePasswordResetToken(
+  email: string,
+): Promise<{ success: boolean; message: string }> {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email.trim().toLowerCase()))
+    .limit(1);
+
+  if (!user || user.isGuest) {
+    // Don't leak whether email exists — always return success
+    return {
+      success: true,
+      message: 'If an account exists with that email, a reset link has been sent.',
+    };
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+
+  await db.insert(passwordResets).values({
+    userId: user.id,
+    token,
+    expiresAt,
+  });
+
+  // ── Mock email (plug in SMTP later) ──
+  console.log('─────────────────────────────────────────');
+  console.log('[NINE] Password Reset Email (MOCK)');
+  console.log(`  To:    ${user.email}`);
+  console.log(`  Token: ${token}`);
+  console.log(`  Link:  https://nine.io/reset?token=${token}`);
+  console.log(`  Expires: ${expiresAt.toISOString()}`);
+  console.log('─────────────────────────────────────────');
+
+  return {
+    success: true,
+    message: 'If an account exists with that email, a reset link has been sent.',
+  };
 }
 
 // ─── Session Management ─────────────────────
@@ -116,7 +195,6 @@ export async function getUserFromRequest(
 
   if (!sessionId) return null;
 
-  // Join session → user, check expiry
   const [session] = await db
     .select()
     .from(sessions)
@@ -127,7 +205,6 @@ export async function getUserFromRequest(
 
   // Check expiry
   if (new Date(session.expiresAt) < new Date()) {
-    // Clean up expired session
     await destroySession(sessionId);
     return null;
   }
@@ -142,6 +219,35 @@ export async function getUserFromRequest(
   if (!user) return null;
 
   return toSafeUser(user);
+}
+
+// ─── Get Session ID from Request ────────────
+
+export function getSessionIdFromRequest(request: Request): string | null {
+  const cookieHeader = request.headers.get('Cookie');
+  return parseSessionIdFromCookie(cookieHeader);
+}
+
+// ─── Fetch Recent Scores for User ───────────
+
+export async function getRecentScores(
+  userId: string,
+  limit = 10,
+): Promise<Array<{ id: string; modeId: string; score: number; timeMs: number; createdAt: Date }>> {
+  const rows = await db
+    .select({
+      id: scores.id,
+      modeId: scores.modeId,
+      score: scores.score,
+      timeMs: scores.timeMs,
+      createdAt: scores.createdAt,
+    })
+    .from(scores)
+    .where(eq(scores.userId, userId))
+    .orderBy(scores.createdAt)
+    .limit(limit);
+
+  return rows;
 }
 
 // ─── Validation Helpers ─────────────────────
