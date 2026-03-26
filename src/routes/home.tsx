@@ -1,14 +1,16 @@
 // ──────────────────────────────────────────────
-// NINE — Grand Lobby (Mode Selector)
+// NINE — The Vault Dial (Homepage)
+// Neo-brutalist cyberpunk mode selector
 // ──────────────────────────────────────────────
 
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { motion } from 'framer-motion';
-import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Types ──────────────────────────────────
 
 type GameCategory = 'Core Systems' | 'The Cyphers' | 'The Archives' | 'The Matrices';
+type VaultPhase = 'idle' | 'category-selected' | 'mode-selected';
 
 interface GameModeEntry {
   id: string;
@@ -17,33 +19,36 @@ interface GameModeEntry {
   category: GameCategory;
 }
 
-// ─── Mode Registry ──────────────────────────
+interface DifficultyEntry {
+  key: string;
+  label: string;
+  sublabel: string;
+  accent: string;
+}
+
+// ─── Data ───────────────────────────────────
 
 const GAME_MODES: readonly GameModeEntry[] = [
-  // Core Systems
-  { id: 'prime-grid',      name: 'The Prime Grid',    description: 'Classic 9×9 logic. The original test.',          category: 'Core Systems' },
-  { id: 'glyph-grid',      name: 'Glyph Grid',        description: 'Wordoku with diagonal constraints.',             category: 'Core Systems' },
-  { id: 'shattered-grid',  name: 'Shattered Grid',    description: 'Reassemble fractured polyomino shards.',         category: 'Core Systems' },
-  { id: 'canvas-fracture', name: 'Canvas Fracture',   description: 'Slide and rotate tiles into place.',             category: 'Core Systems' },
+  { id: 'prime-grid',      name: 'Prime Grid',        description: 'Classic 9×9 logic.',            category: 'Core Systems' },
+  { id: 'glyph-grid',      name: 'Glyph Grid',        description: 'Wordoku with diagonals.',       category: 'Core Systems' },
+  { id: 'shattered-grid',  name: 'Shattered Grid',    description: 'Reassemble polyomino shards.',  category: 'Core Systems' },
+  { id: 'canvas-fracture', name: 'Canvas Fracture',   description: 'Slide & rotate tiles.',         category: 'Core Systems' },
 
-  // The Cyphers
-  { id: 'vault-breaker',   name: 'Vault Breaker',     description: 'Crack the 5-letter code in 6 attempts.',         category: 'The Cyphers' },
-  { id: 'cipher-scramble', name: 'Cipher Scramble',   description: 'Unscramble letters. Find every word.',           category: 'The Cyphers' },
-  { id: 'lexicon-weave',   name: 'Lexicon Weave',     description: 'Crossword grid. Intersections are law.',         category: 'The Cyphers' },
-  { id: 'enigma-weave',    name: 'Enigma Weave',      description: 'Cryptic crossword. Double meanings only.',       category: 'The Cyphers' },
+  { id: 'vault-breaker',   name: 'Vault Breaker',     description: 'Crack the 5-letter code.',      category: 'The Cyphers' },
+  { id: 'cipher-scramble', name: 'Cipher Scramble',   description: 'Unscramble. Find every word.',  category: 'The Cyphers' },
+  { id: 'lexicon-weave',   name: 'Lexicon Weave',     description: 'Crossword intersections.',      category: 'The Cyphers' },
+  { id: 'enigma-weave',    name: 'Enigma Weave',      description: 'Cryptic double meanings.',      category: 'The Cyphers' },
 
-  // The Archives
-  { id: 'interrogation',   name: 'The Interrogation', description: 'Timed quiz. Multiplier decays every second.',    category: 'The Archives' },
-  { id: 'alias-protocol',  name: 'Alias Protocol',    description: '5 clues. 3 guesses. Identify the subject.',      category: 'The Archives' },
-  { id: 'global-override', name: 'Global Override',   description: 'Rapid-fire geo flash. Speed is everything.',     category: 'The Archives' },
+  { id: 'interrogation',   name: 'The Interrogation', description: 'Timed quiz. Multiplier decays.',category: 'The Archives' },
+  { id: 'alias-protocol',  name: 'Alias Protocol',    description: '5 clues. 3 guesses.',           category: 'The Archives' },
+  { id: 'global-override', name: 'Global Override',    description: 'Rapid-fire geo flash.',         category: 'The Archives' },
 
-  // The Matrices
-  { id: 'data-sift',       name: 'Data Sift',         description: 'Find 4 that belong. Reject the noise.',          category: 'The Matrices' },
-  { id: 'cinema-lattice',  name: 'Cinema Lattice',    description: 'Fill the actor–genre–decade matrix.',             category: 'The Matrices' },
-  { id: 'chronos-shift',   name: 'Chronos Shift',     description: 'Sort events into chronological order.',           category: 'The Matrices' },
-] as const;
+  { id: 'data-sift',       name: 'Data Sift',         description: 'Find 4 that belong.',           category: 'The Matrices' },
+  { id: 'cinema-lattice',  name: 'Cinema Lattice',    description: 'Actor-genre-decade matrix.',    category: 'The Matrices' },
+  { id: 'chronos-shift',   name: 'Chronos Shift',     description: 'Sort events chronologically.',  category: 'The Matrices' },
+];
 
-const CATEGORY_ORDER: readonly GameCategory[] = [
+const CATEGORIES: readonly GameCategory[] = [
   'Core Systems',
   'The Cyphers',
   'The Archives',
@@ -51,13 +56,11 @@ const CATEGORY_ORDER: readonly GameCategory[] = [
 ];
 
 const CATEGORY_ACCENTS: Record<GameCategory, string> = {
-  'Core Systems': 'rgba(96, 165, 250, 0.7)',   // blue
-  'The Cyphers':  'rgba(167, 139, 250, 0.7)',   // violet
-  'The Archives': 'rgba(251, 191, 36, 0.7)',    // amber
-  'The Matrices': 'rgba(52, 211, 153, 0.7)',    // emerald
+  'Core Systems': '#00FFFF',
+  'The Cyphers':  '#FF00FF',
+  'The Archives': '#FF6600',
+  'The Matrices': '#AAFF00',
 };
-
-// ─── Category Icon Glyphs ───────────────────
 
 const CATEGORY_GLYPHS: Record<GameCategory, string> = {
   'Core Systems': '◈',
@@ -66,270 +69,916 @@ const CATEGORY_GLYPHS: Record<GameCategory, string> = {
   'The Matrices': '⬡',
 };
 
-// ─── Animation Variants ─────────────────────
+const DIFFICULTIES: readonly DifficultyEntry[] = [
+  { key: 'trainee',    label: 'TRAINEE',    sublabel: 'Easy',   accent: '#AAFF00' },
+  { key: 'operative',  label: 'OPERATIVE',  sublabel: 'Medium', accent: '#00FFFF' },
+  { key: 'mastermind', label: 'MASTERMIND', sublabel: 'Hard',   accent: '#FF00FF' },
+];
 
-const sectionVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.12,
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  }),
-};
+// ─── Geometry Utilities ─────────────────────
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 12, scale: 0.97 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
+const DEG2RAD = Math.PI / 180;
+
+function polarToXY(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = (angleDeg - 90) * DEG2RAD;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function describeArc(cx: number, cy: number, r: number, startDeg: number, endDeg: number): string {
+  const start = polarToXY(cx, cy, r, endDeg);
+  const end = polarToXY(cx, cy, r, startDeg);
+  const large = endDeg - startDeg > 180 ? 1 : 0;
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} 0 ${end.x} ${end.y}`;
+}
+
+function midAngle(startDeg: number, endDeg: number): number {
+  return (startDeg + endDeg) / 2;
+}
+
+// ─── Dial Constants ─────────────────────────
+
+const CX = 300;
+const CY = 300;
+const OUTER_R = 250;
+const MIDDLE_R = 170;
+const CORE_R = 65;
+const ARC_GAP = 8;
+const DIAL_SIZE = 600;
+
+// ─── Framer Motion Variants ─────────────────
+
+const coreLockVariants = {
+  locked: {
     scale: 1,
-    transition: {
-      delay: i * 0.06,
-      duration: 0.35,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  }),
+    boxShadow: '0 0 0px rgba(0,255,255,0), inset 0 0 0px rgba(0,255,255,0)',
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  primed: {
+    scale: 1.06,
+    boxShadow: '0 0 25px rgba(0,255,255,0.15), inset 0 0 15px rgba(0,255,255,0.05)',
+    borderColor: 'rgba(0,255,255,0.35)',
+    transition: { type: 'spring' as const, stiffness: 200, damping: 15 },
+  },
+  unlocked: {
+    scale: [1.06, 1.25, 1.1],
+    boxShadow: [
+      '0 0 25px rgba(0,255,255,0.15), inset 0 0 15px rgba(0,255,255,0.05)',
+      '0 0 80px rgba(0,255,255,0.6), inset 0 0 40px rgba(0,255,255,0.2)',
+      '0 0 35px rgba(0,255,255,0.25), inset 0 0 20px rgba(0,255,255,0.1)',
+    ],
+    borderColor: ['rgba(0,255,255,0.35)', 'rgba(0,255,255,1)', 'rgba(0,255,255,0.5)'],
+    transition: { duration: 0.6, times: [0, 0.4, 1] },
+  },
 };
 
-// ─── Background Grid ────────────────────────
+const cardFlyVariants = {
+  hidden: { scale: 0, opacity: 0, y: 0 },
+  visible: (i: number) => ({
+    scale: 1,
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 280,
+      damping: 22,
+      mass: 0.8,
+      delay: 0.35 + i * 0.09,
+    },
+  }),
+  exit: {
+    scale: 0,
+    opacity: 0,
+    transition: { duration: 0.15 },
+  },
+};
 
-function BackgroundGrid() {
+const labelVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+};
+
+const breadcrumbVariants = {
+  hidden: { opacity: 0, y: 6 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, delay: 0.1 } },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.15 } },
+};
+
+// ─── Cosmic Background ──────────────────────
+
+function CosmicBackground() {
   return (
-    <svg
-      className="fixed inset-0 w-full h-full pointer-events-none z-0"
-      aria-hidden="true"
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <defs>
-        <pattern
-          id="lobby-grid"
-          width="60"
-          height="60"
-          patternUnits="userSpaceOnUse"
+    <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {/* Base gradient */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 20%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+        }}
+      />
+
+      {/* Grid pattern */}
+      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="vault-grid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="0.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#vault-grid)" />
+      </svg>
+
+      {/* Rotating geometric shapes */}
+      <div
+        className="absolute"
+        style={{
+          top: '15%',
+          left: '10%',
+          width: 400,
+          height: 400,
+          border: '1px solid rgba(0,255,255,0.025)',
+          animation: 'slow-spin 120s linear infinite',
+        }}
+      />
+      <div
+        className="absolute"
+        style={{
+          top: '50%',
+          right: '5%',
+          width: 300,
+          height: 300,
+          border: '1px solid rgba(255,0,255,0.02)',
+          borderRadius: '50%',
+          animation: 'reverse-spin 90s linear infinite',
+        }}
+      />
+      <div
+        className="absolute"
+        style={{
+          bottom: '10%',
+          left: '30%',
+          width: 200,
+          height: 200,
+          border: '1px solid rgba(170,255,0,0.02)',
+          transform: 'rotate(45deg)',
+          animation: 'slow-spin 150s linear infinite',
+        }}
+      />
+
+      {/* Nebula glow */}
+      <div
+        className="absolute"
+        style={{
+          top: '20%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 800,
+          height: 800,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(100,0,180,0.06) 0%, transparent 70%)',
+          animation: 'pulse-glow 8s ease-in-out infinite',
+        }}
+      />
+
+      {/* Scanlines */}
+      <div
+        className="absolute inset-0 opacity-[0.012]"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 3px)',
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Outer Ring (Categories) ────────────────
+
+interface OuterRingProps {
+  activeCategory: GameCategory | null;
+  onSelect: (cat: GameCategory) => void;
+  phase: VaultPhase;
+}
+
+function OuterRing({ activeCategory, onSelect, phase }: OuterRingProps) {
+  const arcSpan = 360 / CATEGORIES.length - ARC_GAP;
+
+  return (
+    <>
+      {/* SVG arcs */}
+      <svg
+        className="absolute inset-0"
+        viewBox={`0 0 ${DIAL_SIZE} ${DIAL_SIZE}`}
+        style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
+      >
+        <defs>
+          {CATEGORIES.map((cat) => (
+            <filter key={`glow-${cat}`} id={`glow-outer-${cat.replace(/\s/g, '')}`}>
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          ))}
+        </defs>
+
+        {CATEGORIES.map((cat, i) => {
+          const startDeg = i * (arcSpan + ARC_GAP) + ARC_GAP / 2;
+          const endDeg = startDeg + arcSpan;
+          const isActive = activeCategory === cat;
+          const isDimmed = phase !== 'idle' && !isActive;
+          const accent = CATEGORY_ACCENTS[cat];
+          const d = describeArc(CX, CY, OUTER_R, startDeg, endDeg);
+
+          return (
+            <g key={cat}>
+              {/* Invisible wide hit area */}
+              <path
+                d={d}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={50}
+                strokeLinecap="round"
+                style={{ cursor: 'pointer' }}
+                onClick={() => onSelect(cat)}
+              />
+              {/* Visible arc */}
+              <motion.path
+                d={d}
+                fill="none"
+                strokeLinecap="round"
+                initial={false}
+                animate={{
+                  stroke: isActive ? accent : isDimmed ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)',
+                  strokeWidth: isActive ? 6 : 3,
+                  filter: isActive ? `url(#glow-outer-${cat.replace(/\s/g, '')})` : 'none',
+                  opacity: isDimmed ? 0.3 : 1,
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                style={{ pointerEvents: 'none' }}
+              />
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Labels positioned at arc midpoints */}
+      {CATEGORIES.map((cat, i) => {
+        const startDeg = i * (arcSpan + ARC_GAP) + ARC_GAP / 2;
+        const endDeg = startDeg + arcSpan;
+        const mid = midAngle(startDeg, endDeg);
+        const pos = polarToXY(CX, CY, OUTER_R + 35, mid);
+        const isActive = activeCategory === cat;
+        const isDimmed = phase !== 'idle' && !isActive;
+        const accent = CATEGORY_ACCENTS[cat];
+
+        return (
+          <motion.button
+            key={cat}
+            className="absolute flex flex-col items-center gap-0.5 cursor-pointer select-none z-10"
+            style={{
+              left: pos.x,
+              top: pos.y,
+              transform: 'translate(-50%, -50%)',
+            }}
+            onClick={() => onSelect(cat)}
+            animate={{
+              opacity: isDimmed ? 0.25 : 1,
+              scale: isActive ? 1.08 : 1,
+            }}
+            whileHover={{ scale: isDimmed ? 1 : 1.12 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          >
+            <span
+              className="text-lg"
+              style={{ color: isActive ? accent : 'rgba(255,255,255,0.35)' }}
+            >
+              {CATEGORY_GLYPHS[cat]}
+            </span>
+            <span
+              className="text-[0.55rem] font-bold tracking-[0.15em] uppercase whitespace-nowrap"
+              style={{
+                fontFamily: 'var(--font-display)',
+                color: isActive ? accent : 'rgba(255,255,255,0.4)',
+                textShadow: isActive ? `0 0 12px ${accent}40` : 'none',
+              }}
+            >
+              {cat}
+            </span>
+          </motion.button>
+        );
+      })}
+    </>
+  );
+}
+
+// ─── Middle Ring (Game Modes) ───────────────
+
+interface MiddleRingProps {
+  modes: GameModeEntry[];
+  activeMode: GameModeEntry | null;
+  activeCategory: GameCategory | null;
+  onSelect: (mode: GameModeEntry) => void;
+  phase: VaultPhase;
+}
+
+function MiddleRing({ modes, activeMode, activeCategory, onSelect, phase }: MiddleRingProps) {
+  if (!activeCategory || modes.length === 0) return null;
+
+  const accent = CATEGORY_ACCENTS[activeCategory];
+  const arcSpan = 360 / modes.length - ARC_GAP;
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={activeCategory}
+        className="absolute inset-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* SVG arcs */}
+        <svg
+          className="absolute inset-0"
+          viewBox={`0 0 ${DIAL_SIZE} ${DIAL_SIZE}`}
+          style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
         >
-          <path
-            d="M 60 0 L 0 0 0 60"
-            fill="none"
-            stroke="rgba(255,255,255,0.04)"
-            strokeWidth="0.5"
-          />
-        </pattern>
-        <radialGradient id="lobby-fade" cx="50%" cy="0%" r="70%">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.03)" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#lobby-grid)" />
-      <rect width="100%" height="100%" fill="url(#lobby-fade)" />
-    </svg>
+          <defs>
+            <filter id="glow-middle">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {modes.map((mode, i) => {
+            const startDeg = i * (arcSpan + ARC_GAP) + ARC_GAP / 2;
+            const endDeg = startDeg + arcSpan;
+            const isActive = activeMode?.id === mode.id;
+            const isDimmed = phase === 'mode-selected' && !isActive;
+            const d = describeArc(CX, CY, MIDDLE_R, startDeg, endDeg);
+
+            return (
+              <g key={mode.id}>
+                {/* Hit area */}
+                <path
+                  d={d}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={40}
+                  strokeLinecap="round"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => onSelect(mode)}
+                />
+                {/* Visible arc */}
+                <motion.path
+                  d={d}
+                  fill="none"
+                  strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{
+                    pathLength: 1,
+                    opacity: isDimmed ? 0.25 : 1,
+                    stroke: isActive ? accent : `${accent}66`,
+                    strokeWidth: isActive ? 5 : 2.5,
+                    filter: isActive ? 'url(#glow-middle)' : 'none',
+                  }}
+                  transition={{
+                    pathLength: {
+                      type: 'spring',
+                      stiffness: 80,
+                      damping: 18,
+                      delay: i * 0.08,
+                    },
+                    opacity: { duration: 0.2, delay: i * 0.08 },
+                    stroke: { type: 'spring', stiffness: 300, damping: 25 },
+                    strokeWidth: { type: 'spring', stiffness: 300, damping: 25 },
+                  }}
+                  style={{ pointerEvents: 'none' }}
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Mode labels */}
+        {modes.map((mode, i) => {
+          const startDeg = i * (arcSpan + ARC_GAP) + ARC_GAP / 2;
+          const endDeg = startDeg + arcSpan;
+          const mid = midAngle(startDeg, endDeg);
+          const pos = polarToXY(CX, CY, MIDDLE_R + 28, mid);
+          const isActive = activeMode?.id === mode.id;
+          const isDimmed = phase === 'mode-selected' && !isActive;
+
+          return (
+            <motion.button
+              key={mode.id}
+              className="absolute flex flex-col items-center gap-0.5 cursor-pointer select-none z-10"
+              style={{
+                left: pos.x,
+                top: pos.y,
+                transform: 'translate(-50%, -50%)',
+              }}
+              onClick={() => onSelect(mode)}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: isDimmed ? 0.2 : 1,
+                scale: isActive ? 1.1 : 1,
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 350,
+                damping: 25,
+                delay: i * 0.06,
+              }}
+              whileHover={{ scale: isDimmed ? 1 : 1.15 }}
+            >
+              <span
+                className="text-[0.6rem] font-semibold tracking-wide uppercase whitespace-nowrap"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  color: isActive ? accent : `${accent}99`,
+                  textShadow: isActive ? `0 0 10px ${accent}50` : 'none',
+                }}
+              >
+                {mode.name}
+              </span>
+              <span
+                className="text-[0.45rem] tracking-wider whitespace-nowrap"
+                style={{ color: isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)' }}
+              >
+                {mode.description}
+              </span>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
-// ─── Scanline Decoration ────────────────────
+// ─── Core Lock (Center) ─────────────────────
 
-function Scanlines() {
-  return (
-    <div
-      className="fixed inset-0 pointer-events-none z-[1] opacity-[0.015]"
-      aria-hidden="true"
-      style={{
-        backgroundImage:
-          'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 3px)',
-      }}
-    />
-  );
+interface CoreLockProps {
+  phase: VaultPhase;
+  activeCategory: GameCategory | null;
+  activeMode: GameModeEntry | null;
+  onReset: () => void;
 }
 
-// ─── Mode Card ──────────────────────────────
+function CoreLock({ phase, activeCategory, activeMode, onReset }: CoreLockProps) {
+  const state = phase === 'mode-selected' ? 'unlocked' : phase === 'category-selected' ? 'primed' : 'locked';
+  const accent = activeCategory ? CATEGORY_ACCENTS[activeCategory] : '#333';
 
-interface ModeCardProps {
-  mode: GameModeEntry;
-  accent: string;
-  index: number;
-  onClick: () => void;
-}
-
-function ModeCard({ mode, accent, index, onClick }: ModeCardProps) {
   return (
     <motion.button
-      className={clsx(
-        'group relative flex flex-col items-start gap-3',
-        'rounded-xl p-5 text-left w-full',
-        'border border-white/[0.06]',
-        'bg-white/[0.02] backdrop-blur-sm',
-        'cursor-pointer outline-none',
-        'focus-visible:ring-1 focus-visible:ring-white/20',
-      )}
-      custom={index}
-      variants={cardVariants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: '-20px' }}
-      whileHover={{
-        scale: 1.02,
-        borderColor: 'rgba(255,255,255,0.3)',
-        transition: { type: 'spring' as const, stiffness: 400, damping: 25 },
+      className="absolute z-20 rounded-full flex flex-col items-center justify-center cursor-pointer select-none"
+      style={{
+        width: CORE_R * 2,
+        height: CORE_R * 2,
+        left: CX - CORE_R,
+        top: CY - CORE_R,
+        background: 'rgba(10,10,15,0.9)',
+        border: '2px solid',
+        backdropFilter: 'blur(8px)',
       }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      aria-label={`Play ${mode.name}`}
+      variants={coreLockVariants}
+      animate={state}
+      onClick={onReset}
+      whileHover={state !== 'locked' ? { scale: 1.08 } : undefined}
     >
-      {/* Accent glow on hover */}
-      <div
-        className={clsx(
-          'absolute inset-0 rounded-xl opacity-0',
-          'group-hover:opacity-100 transition-opacity duration-300',
-        )}
-        style={{
-          background: `radial-gradient(ellipse at 30% 0%, ${accent}, transparent 70%)`,
-          opacity: 0,
-        }}
-      />
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-[0.06] transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(ellipse at 30% 0%, ${accent}, transparent 70%)`,
-        }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col gap-2 w-full">
-        <div className="flex items-center justify-between w-full">
-          <h3
-            className={clsx(
-              'text-[0.9rem] font-bold tracking-wide',
-              'text-white/90 group-hover:text-white',
-              'transition-colors duration-150',
-            )}
+      <AnimatePresence mode="wait">
+        {phase === 'idle' && (
+          <motion.div
+            key="idle"
+            className="flex flex-col items-center gap-1"
+            variants={labelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            {mode.name}
-          </h3>
-          <motion.span
-            className="text-[0.65rem] text-white/20 group-hover:text-white/50 transition-colors duration-150"
-            aria-hidden="true"
-          >
-            →
-          </motion.span>
-        </div>
-        <p className="text-[0.75rem] leading-relaxed text-white/35 group-hover:text-white/50 transition-colors duration-150">
-          {mode.description}
-        </p>
-      </div>
-
-      {/* Bottom accent line */}
-      <div
-        className={clsx(
-          'absolute bottom-0 left-4 right-4 h-px',
-          'opacity-0 group-hover:opacity-100',
-          'transition-opacity duration-300',
+            <span
+              className="text-[0.55rem] font-bold tracking-[0.2em] uppercase"
+              style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.25)' }}
+            >
+              LOCKED
+            </span>
+          </motion.div>
         )}
-        style={{ background: accent }}
-      />
+        {phase === 'category-selected' && activeCategory && (
+          <motion.div
+            key="primed"
+            className="flex flex-col items-center gap-1"
+            variants={labelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <span className="text-xl" style={{ color: accent }}>
+              {CATEGORY_GLYPHS[activeCategory]}
+            </span>
+            <span
+              className="text-[0.45rem] font-semibold tracking-[0.15em] uppercase"
+              style={{ fontFamily: 'var(--font-display)', color: `${accent}aa` }}
+            >
+              SELECT MODE
+            </span>
+          </motion.div>
+        )}
+        {phase === 'mode-selected' && activeMode && (
+          <motion.div
+            key="unlocked"
+            className="flex flex-col items-center gap-1"
+            variants={labelVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <motion.span
+              className="text-[0.65rem] font-black tracking-[0.2em] uppercase"
+              style={{ fontFamily: 'var(--font-display)', color: accent }}
+              animate={{ opacity: [1, 0.6, 1] }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+            >
+              LAUNCH
+            </motion.span>
+            <span
+              className="text-[0.4rem] tracking-wider uppercase"
+              style={{ color: 'rgba(255,255,255,0.4)' }}
+            >
+              {activeMode.name}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.button>
   );
+}
+
+// ─── Difficulty Cards (Flying) ──────────────
+
+interface DifficultyCardsProps {
+  visible: boolean;
+  activeMode: GameModeEntry | null;
+  onLaunch: (difficulty: string) => void;
+}
+
+function DifficultyCards({ visible, activeMode, onLaunch }: DifficultyCardsProps) {
+  if (!activeMode) return null;
+
+  const cardPositions = [
+    { x: -180, y: 80 },
+    { x: 0, y: 80 },
+    { x: 180, y: 80 },
+  ];
+
+  return (
+    <div
+      className="absolute z-30"
+      style={{ left: CX, top: CY + OUTER_R + 30 }}
+    >
+      <AnimatePresence>
+        {visible &&
+          DIFFICULTIES.map((diff, i) => (
+            <motion.button
+              key={diff.key}
+              className="absolute flex flex-col items-center justify-center gap-2 cursor-pointer select-none"
+              style={{
+                width: 140,
+                height: 170,
+                left: -70,
+                top: -85,
+                background: '#0c0c14',
+                border: `3px solid ${diff.accent}`,
+                boxShadow: `6px 6px 0px ${diff.accent}`,
+              }}
+              custom={i}
+              variants={cardFlyVariants}
+              initial="hidden"
+              animate={{
+                ...cardFlyVariants.visible(i),
+                x: cardPositions[i].x,
+                y: cardPositions[i].y,
+              }}
+              exit="exit"
+              whileHover={{
+                y: cardPositions[i].y - 12,
+                boxShadow: `8px 10px 0px ${diff.accent}, 0 0 30px ${diff.accent}40`,
+                transition: { type: 'spring', stiffness: 400, damping: 20 },
+              }}
+              whileTap={{
+                scale: [1, 0.88, 1.06, 1],
+                transition: { duration: 0.3, times: [0, 0.3, 0.7, 1] },
+              }}
+              onClick={() => onLaunch(diff.key)}
+            >
+              {/* Geometric accent shape */}
+              <div
+                className="w-8 h-8 rotate-45"
+                style={{
+                  border: `2px solid ${diff.accent}`,
+                  boxShadow: `0 0 12px ${diff.accent}30`,
+                }}
+              />
+              <span
+                className="text-[0.7rem] font-black tracking-[0.2em]"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  color: diff.accent,
+                }}
+              >
+                {diff.label}
+              </span>
+              <span
+                className="text-[0.5rem] tracking-[0.15em] uppercase"
+                style={{ color: 'rgba(255,255,255,0.35)' }}
+              >
+                {diff.sublabel}
+              </span>
+            </motion.button>
+          ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── State Breadcrumb ───────────────────────
+
+interface BreadcrumbProps {
+  phase: VaultPhase;
+  activeCategory: GameCategory | null;
+  activeMode: GameModeEntry | null;
+}
+
+function StateBreadcrumb({ phase, activeCategory, activeMode }: BreadcrumbProps) {
+  const accent = activeCategory ? CATEGORY_ACCENTS[activeCategory] : '#666';
+
+  return (
+    <div className="h-8 flex items-center justify-center">
+      <AnimatePresence mode="wait">
+        {phase === 'idle' && (
+          <motion.p
+            key="idle"
+            className="text-[0.6rem] uppercase tracking-[0.3em]"
+            style={{ color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-display)' }}
+            variants={breadcrumbVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            Select a sector
+          </motion.p>
+        )}
+        {phase === 'category-selected' && activeCategory && (
+          <motion.p
+            key={`cat-${activeCategory}`}
+            className="text-[0.6rem] uppercase tracking-[0.2em] flex items-center gap-2"
+            style={{ fontFamily: 'var(--font-display)' }}
+            variants={breadcrumbVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <span style={{ color: accent }}>{activeCategory}</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>{'>'}</span>
+            <span style={{ color: 'rgba(255,255,255,0.25)' }}>???</span>
+          </motion.p>
+        )}
+        {phase === 'mode-selected' && activeCategory && activeMode && (
+          <motion.p
+            key={`mode-${activeMode.id}`}
+            className="text-[0.6rem] uppercase tracking-[0.2em] flex items-center gap-2"
+            style={{ fontFamily: 'var(--font-display)' }}
+            variants={breadcrumbVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <span style={{ color: accent }}>{activeCategory}</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>{'>'}</span>
+            <span style={{ color: accent }}>{activeMode.name}</span>
+            <span style={{ color: 'rgba(255,255,255,0.15)' }}>{'>'}</span>
+            <span
+              style={{ color: 'rgba(255,255,255,0.4)' }}
+              className="animate-pulse"
+            >
+              SELECT DIFFICULTY
+            </span>
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── Responsive Scale Hook ──────────────────
+
+function useDialScale(containerRef: React.RefObject<HTMLDivElement | null>) {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        setScale(Math.min(1, (w - 20) / DIAL_SIZE));
+      }
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [containerRef]);
+
+  return scale;
 }
 
 // ─── Home Route ─────────────────────────────
 
 export default function Home() {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scale = useDialScale(containerRef);
 
-  const grouped = CATEGORY_ORDER.map((category) => ({
-    category,
-    modes: GAME_MODES.filter((m) => m.category === category),
-  }));
+  const [phase, setPhase] = useState<VaultPhase>('idle');
+  const [activeCategory, setActiveCategory] = useState<GameCategory | null>(null);
+  const [activeMode, setActiveMode] = useState<GameModeEntry | null>(null);
+
+  const modesForCategory = useMemo(
+    () => (activeCategory ? GAME_MODES.filter((m) => m.category === activeCategory) : []),
+    [activeCategory],
+  );
+
+  const selectCategory = useCallback((cat: GameCategory) => {
+    setActiveCategory(cat);
+    setActiveMode(null);
+    setPhase('category-selected');
+  }, []);
+
+  const selectMode = useCallback((mode: GameModeEntry) => {
+    setActiveMode(mode);
+    setPhase('mode-selected');
+  }, []);
+
+  const resetToIdle = useCallback(() => {
+    if (phase === 'mode-selected') {
+      setActiveMode(null);
+      setPhase('category-selected');
+    } else {
+      setActiveCategory(null);
+      setActiveMode(null);
+      setPhase('idle');
+    }
+  }, [phase]);
+
+  const launchGame = useCallback(
+    (difficulty: string) => {
+      if (!activeMode) return;
+      // Let squash animation play, then navigate
+      setTimeout(() => {
+        navigate(`/play/${activeMode.id}?difficulty=${difficulty}`);
+      }, 320);
+    },
+    [activeMode, navigate],
+  );
+
+  // Calculate total height needed (dial + cards below)
+  const totalHeight = DIAL_SIZE + (phase === 'mode-selected' ? 280 : 40);
 
   return (
-    <div className="relative min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
-      <BackgroundGrid />
-      <Scanlines />
+    <div className="relative min-h-screen text-white overflow-x-hidden">
+      <CosmicBackground />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-5 py-16 sm:py-24">
+      <div ref={containerRef} className="relative z-10 w-full max-w-[700px] mx-auto px-4 py-8 sm:py-12">
         {/* ── Header ── */}
         <motion.header
-          className="flex flex-col items-center gap-4 mb-20 select-none"
+          className="text-center mb-6 sm:mb-10 select-none"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <motion.h1
-            className="text-[5rem] sm:text-[6.5rem] font-black leading-none tracking-tighter text-white"
+            className="text-5xl sm:text-7xl font-black leading-none tracking-tighter"
+            style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
             animate={{ opacity: [0.85, 1, 0.85] }}
             transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
           >
             NINE
           </motion.h1>
-          <p className="text-[0.6rem] uppercase tracking-[0.4em] font-medium text-white/30">
-            Logic · Deduction · Spatial · Trivia
+          <p
+            className="text-[0.55rem] uppercase tracking-[0.4em] mt-2"
+            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-display)' }}
+          >
+            Select Your Protocol
           </p>
-          <div className="w-16 h-px bg-white/10 mt-2" />
+          <div className="w-16 h-px bg-white/10 mx-auto mt-3" />
         </motion.header>
 
-        {/* ── Category Sections ── */}
-        <div className="flex flex-col gap-16">
-          {grouped.map(({ category, modes }, sectionIndex) => (
-            <motion.section
-              key={category}
-              custom={sectionIndex}
-              variants={sectionVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-40px' }}
-            >
-              {/* Section Header */}
-              <div className="flex items-center gap-3 mb-6">
-                <span
-                  className="text-base opacity-40"
-                  style={{ color: CATEGORY_ACCENTS[category] }}
-                  aria-hidden="true"
-                >
-                  {CATEGORY_GLYPHS[category]}
-                </span>
-                <h2
-                  className="text-xs font-semibold uppercase"
-                  style={{
-                    letterSpacing: '0.2em',
-                    color: CATEGORY_ACCENTS[category],
-                  }}
-                >
-                  {category}
-                </h2>
-                <div
-                  className="flex-1 h-px opacity-20"
-                  style={{ background: CATEGORY_ACCENTS[category] }}
-                />
-              </div>
+        {/* ── Breadcrumb ── */}
+        <StateBreadcrumb phase={phase} activeCategory={activeCategory} activeMode={activeMode} />
 
-              {/* Mode Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {modes.map((mode, cardIndex) => (
-                  <ModeCard
-                    key={mode.id}
-                    mode={mode}
-                    accent={CATEGORY_ACCENTS[category]}
-                    index={cardIndex}
-                    onClick={() => navigate(`/play/${mode.id}`)}
-                  />
-                ))}
-              </div>
-            </motion.section>
-          ))}
+        {/* ── Vault Dial ── */}
+        <div className="flex justify-center mt-4">
+          <div
+            className="relative"
+            style={{
+              width: DIAL_SIZE,
+              height: totalHeight,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top center',
+            }}
+          >
+            {/* Decorative rings */}
+            <svg
+              className="absolute inset-0 pointer-events-none"
+              viewBox={`0 0 ${DIAL_SIZE} ${DIAL_SIZE}`}
+              style={{ width: DIAL_SIZE, height: DIAL_SIZE }}
+            >
+              {/* Faint outer guide circle */}
+              <circle
+                cx={CX}
+                cy={CY}
+                r={OUTER_R}
+                fill="none"
+                stroke="rgba(255,255,255,0.03)"
+                strokeWidth="1"
+                strokeDasharray="4 8"
+              />
+              {/* Faint middle guide circle */}
+              <motion.circle
+                cx={CX}
+                cy={CY}
+                r={MIDDLE_R}
+                fill="none"
+                strokeWidth="1"
+                strokeDasharray="3 6"
+                animate={{
+                  stroke: activeCategory
+                    ? `${CATEGORY_ACCENTS[activeCategory]}15`
+                    : 'rgba(255,255,255,0.02)',
+                }}
+                transition={{ duration: 0.4 }}
+              />
+              {/* Core guide circle */}
+              <circle
+                cx={CX}
+                cy={CY}
+                r={CORE_R + 8}
+                fill="none"
+                stroke="rgba(255,255,255,0.02)"
+                strokeWidth="0.5"
+              />
+            </svg>
+
+            {/* Interactive layers */}
+            <OuterRing
+              activeCategory={activeCategory}
+              onSelect={selectCategory}
+              phase={phase}
+            />
+
+            <MiddleRing
+              modes={modesForCategory}
+              activeMode={activeMode}
+              activeCategory={activeCategory}
+              onSelect={selectMode}
+              phase={phase}
+            />
+
+            <CoreLock
+              phase={phase}
+              activeCategory={activeCategory}
+              activeMode={activeMode}
+              onReset={resetToIdle}
+            />
+
+            {/* Difficulty Cards */}
+            <DifficultyCards
+              visible={phase === 'mode-selected'}
+              activeMode={activeMode}
+              onLaunch={launchGame}
+            />
+          </div>
         </div>
 
         {/* ── Footer ── */}
         <motion.footer
-          className="mt-24 flex flex-col items-center gap-3 select-none"
+          className="mt-8 flex flex-col items-center gap-3 select-none"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
+          style={{ marginTop: phase === 'mode-selected' ? `${280 * scale}px` : '2rem' }}
         >
           <div className="w-8 h-px bg-white/10" />
-          <p className="text-[0.55rem] uppercase tracking-[0.3em] text-white/15">
+          <p
+            className="text-[0.5rem] uppercase tracking-[0.3em]"
+            style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'var(--font-display)' }}
+          >
             14 Modes · Zero Compromise
           </p>
         </motion.footer>
