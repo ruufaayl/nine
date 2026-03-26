@@ -1,21 +1,19 @@
 // ──────────────────────────────────────────────
-// NINE — Auth Form Component (Login / Sign Up)
+// NINE — Auth Form Component (Client-Side SPA)
 // ──────────────────────────────────────────────
 
-import { useCallback, useState } from 'react';
-import { Form, useActionData, useNavigation } from 'react-router';
+import { useCallback, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import clsx from 'clsx';
 
 // ─── Types ──────────────────────────────────
 
-interface AuthActionData {
-  errors?: {
-    username?: string;
-    email?: string;
-    password?: string;
-    form?: string;
-  };
+interface AuthErrors {
+  username?: string;
+  email?: string;
+  password?: string;
+  form?: string;
 }
 
 // ─── Animation Variants ─────────────────────
@@ -51,12 +49,22 @@ interface AuthInputProps {
   type: string;
   label: string;
   placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
   error?: string;
-  required?: boolean;
   autoComplete?: string;
 }
 
-function AuthInput({ name, type, label, placeholder, error, required, autoComplete }: AuthInputProps) {
+function AuthInput({
+  name,
+  type,
+  label,
+  placeholder,
+  value,
+  onChange,
+  error,
+  autoComplete,
+}: AuthInputProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label
@@ -70,22 +78,20 @@ function AuthInput({ name, type, label, placeholder, error, required, autoComple
         name={name}
         type={type}
         placeholder={placeholder}
-        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required
         autoComplete={autoComplete}
         className={clsx(
           'w-full px-4 py-3 rounded-lg text-sm font-medium',
-          'bg-transparent border-b-2 outline-none',
+          'bg-transparent outline-none',
           'text-white/90 placeholder:text-white/15',
           'transition-colors duration-200',
+          'border-b-2 border-t-0 border-l-0 border-r-0',
           error
             ? 'border-red-500/60 focus:border-red-400'
-            : 'border-white/[0.08] focus:border-[var(--color-accent,#4a90e2)]',
+            : 'border-white/[0.08] focus:border-[#4a90e2]',
         )}
-        style={{
-          borderTop: 'none',
-          borderLeft: 'none',
-          borderRight: 'none',
-        }}
       />
       {error && (
         <motion.span
@@ -103,19 +109,58 @@ function AuthInput({ name, type, label, placeholder, error, required, autoComple
 // ─── Component ──────────────────────────────
 
 export function AuthForm() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
-  const actionData = useActionData<AuthActionData>();
-  const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<AuthErrors | null>(null);
 
-  const errors = actionData?.errors;
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
   const hasFormError = !!errors?.form;
+  const isSignup = mode === 'signup';
 
   const toggleMode = useCallback(() => {
     setMode((m) => (m === 'login' ? 'signup' : 'login'));
+    setErrors(null);
   }, []);
 
-  const isSignup = mode === 'signup';
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setErrors(null);
+      setIsSubmitting(true);
+
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            intent: mode,
+            email,
+            password,
+            ...(isSignup ? { username } : {}),
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.errors) {
+          setErrors(data.errors ?? { form: 'Something went wrong.' });
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Success — redirect to lobby
+        navigate('/');
+      } catch {
+        setErrors({ form: 'Network error. Please try again.' });
+        setIsSubmitting(false);
+      }
+    },
+    [mode, email, password, username, isSignup, navigate],
+  );
 
   return (
     <div className="flex items-center justify-center min-h-screen px-4 bg-[#0a0a0f]">
@@ -127,7 +172,12 @@ export function AuthForm() {
       >
         <defs>
           <pattern id="auth-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
+            <path
+              d="M 60 0 L 0 0 0 60"
+              fill="none"
+              stroke="rgba(255,255,255,0.03)"
+              strokeWidth="0.5"
+            />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#auth-grid)" />
@@ -164,9 +214,7 @@ export function AuthForm() {
           </div>
 
           {/* Form */}
-          <Form method="post" className="flex flex-col gap-4">
-            <input type="hidden" name="intent" value={mode} />
-
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Username — only on signup */}
             <AnimatePresence initial={false}>
               {isSignup && (
@@ -182,8 +230,9 @@ export function AuthForm() {
                     type="text"
                     label="Username"
                     placeholder="agent_codename"
+                    value={username}
+                    onChange={setUsername}
                     error={errors?.username}
-                    required
                     autoComplete="username"
                   />
                 </motion.div>
@@ -195,8 +244,9 @@ export function AuthForm() {
               type="email"
               label="Email"
               placeholder="operative@nine.io"
+              value={email}
+              onChange={setEmail}
               error={errors?.email}
-              required
               autoComplete="email"
             />
 
@@ -205,8 +255,9 @@ export function AuthForm() {
               type="password"
               label="Password"
               placeholder="••••••••"
+              value={password}
+              onChange={setPassword}
               error={errors?.password}
-              required
               autoComplete={isSignup ? 'new-password' : 'current-password'}
             />
 
@@ -219,7 +270,9 @@ export function AuthForm() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                 >
-                  <span className="text-red-400 text-[0.65rem] font-medium">{errors.form}</span>
+                  <span className="text-red-400 text-[0.65rem] font-medium">
+                    {errors.form}
+                  </span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -233,10 +286,7 @@ export function AuthForm() {
                 'outline-none transition-opacity duration-150',
                 isSubmitting && 'opacity-50 cursor-wait',
               )}
-              style={{
-                background: 'var(--color-accent, #4a90e2)',
-                color: '#0a0a0f',
-              }}
+              style={{ background: '#4a90e2', color: '#0a0a0f' }}
               whileHover={!isSubmitting ? { scale: 1.02, opacity: 0.9 } : undefined}
               whileTap={!isSubmitting ? { scale: 0.98 } : undefined}
             >
@@ -246,7 +296,7 @@ export function AuthForm() {
                   ? 'Create Account'
                   : 'Log In'}
             </motion.button>
-          </Form>
+          </form>
 
           {/* Toggle */}
           <div className="flex justify-center">
@@ -255,7 +305,9 @@ export function AuthForm() {
               onClick={toggleMode}
               className="text-[0.65rem] text-white/25 hover:text-white/60 transition-colors duration-200"
             >
-              {isSignup ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
+              {isSignup
+                ? 'Already have an account? Log in'
+                : "Don't have an account? Sign up"}
             </button>
           </div>
         </motion.div>
@@ -263,7 +315,7 @@ export function AuthForm() {
         {/* Bottom accent glow */}
         <div
           className="absolute -bottom-px left-8 right-8 h-px opacity-30"
-          style={{ background: 'var(--color-accent, #4a90e2)' }}
+          style={{ background: '#4a90e2' }}
         />
       </motion.div>
     </div>
