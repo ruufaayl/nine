@@ -1,10 +1,12 @@
 // ──────────────────────────────────────────────
 // NINE — /api/profile/scores (Vercel Serverless Function)
 // GET /api/profile/scores — returns recent scores for current user
+//
+// PERF: single JOIN for auth, single query for scores = 2 total (was 3)
 // ──────────────────────────────────────────────
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { eq } from 'drizzle-orm';
+import { eq, and, gt, desc, sql } from 'drizzle-orm';
 import { db } from '../../src/db/index.js';
 import { users, sessions, scores } from '../../src/db/schema.js';
 
@@ -34,30 +36,28 @@ export default async function handler(
 
   const sessionId = getSessionId(req);
   if (!sessionId) {
-    return res.status(401).json({ scores: [] });
+    return res.status(200).json({ scores: [] });
   }
 
   try {
-    const [session] = await db
-      .select()
+    // ── Auth: single JOIN (session + user) ──
+    const [authRow] = await db
+      .select({ userId: users.id })
       .from(sessions)
-      .where(eq(sessions.id, sessionId))
+      .innerJoin(users, eq(users.id, sessions.userId))
+      .where(
+        and(
+          eq(sessions.id, sessionId),
+          gt(sessions.expiresAt, sql`now()`),
+        ),
+      )
       .limit(1);
 
-    if (!session || new Date(session.expiresAt) < new Date()) {
-      return res.status(401).json({ scores: [] });
+    if (!authRow) {
+      return res.status(200).json({ scores: [] });
     }
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, session.userId))
-      .limit(1);
-
-    if (!user) {
-      return res.status(401).json({ scores: [] });
-    }
-
+    // ── Scores: single query with index on (user_id, created_at) ──
     const rows = await db
       .select({
         id: scores.id,
@@ -67,8 +67,8 @@ export default async function handler(
         createdAt: scores.createdAt,
       })
       .from(scores)
-      .where(eq(scores.userId, user.id))
-      .orderBy(scores.createdAt)
+      .where(eq(scores.userId, authRow.userId))
+      .orderBy(desc(scores.createdAt))
       .limit(10);
 
     return res.status(200).json({ scores: rows });

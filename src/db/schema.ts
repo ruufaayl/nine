@@ -5,6 +5,7 @@
 import { relations } from 'drizzle-orm';
 import {
   boolean,
+  index,
   integer,
   pgTable,
   text,
@@ -15,50 +16,78 @@ import {
 
 // ─── Users ──────────────────────────────────
 
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  username: varchar('username', { length: 32 }).unique().notNull(),
-  email: varchar('email', { length: 255 }).unique().notNull(),
-  passwordHash: text('password_hash').notNull(),
-  isGuest: boolean('is_guest').default(false).notNull(),
-  xp: integer('xp').default(0).notNull(),
-  rank: varchar('rank', { length: 32 }).default('Stone').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    username: varchar('username', { length: 32 }).unique().notNull(),
+    email: varchar('email', { length: 255 }).unique().notNull(),
+    passwordHash: text('password_hash').notNull(),
+    isGuest: boolean('is_guest').default(false).notNull(),
+    xp: integer('xp').default(0).notNull(),
+    rank: varchar('rank', { length: 32 }).default('Stone').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_users_is_guest').on(table.isGuest),
+    index('idx_users_xp').on(table.xp),
+  ],
+);
 
 // ─── Scores ─────────────────────────────────
 
-export const scores = pgTable('scores', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
-  modeId: varchar('mode_id', { length: 64 }).notNull(),
-  score: integer('score').notNull(),
-  timeMs: integer('time_ms').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+export const scores = pgTable(
+  'scores',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    modeId: varchar('mode_id', { length: 64 }).notNull(),
+    score: integer('score').notNull(),
+    timeMs: integer('time_ms').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_scores_user_id').on(table.userId),
+    index('idx_scores_created_at').on(table.createdAt),
+    index('idx_scores_user_created').on(table.userId, table.createdAt),
+  ],
+);
 
 // ─── Sessions ───────────────────────────────
 
-export const sessions = pgTable('sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-});
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('idx_sessions_user_id').on(table.userId),
+    index('idx_sessions_expires_at').on(table.expiresAt),
+  ],
+);
 
 // ─── Password Resets ────────────────────────
 
-export const passwordResets = pgTable('password_resets', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
-  token: varchar('token', { length: 64 }).unique().notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-});
+export const passwordResets = pgTable(
+  'password_resets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    token: varchar('token', { length: 64 }).unique().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('idx_password_resets_user_id').on(table.userId),
+  ],
+);
 
 // ─── Relations ──────────────────────────────
 

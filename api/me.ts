@@ -1,10 +1,12 @@
 // ──────────────────────────────────────────────
 // NINE — /api/me (Vercel Serverless Function)
 // GET /api/me — returns current user from session cookie
+//
+// PERF: single JOIN query (session + user) instead of 2 sequential SELECTs
 // ──────────────────────────────────────────────
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { eq } from 'drizzle-orm';
+import { eq, and, gt, sql } from 'drizzle-orm';
 import { db } from '../src/db/index.js';
 import { users, sessions } from '../src/db/schema.js';
 
@@ -37,38 +39,34 @@ export default async function handler(
     return res.status(200).json({ user: null });
   }
 
+  // Cache-Control: private (user-specific), revalidate after 10s
+  res.setHeader('Cache-Control', 'private, max-age=10, stale-while-revalidate=30');
+
   try {
-    const [session] = await db
-      .select()
+    // ── Single JOIN: session + user in one round-trip ──
+    const rows = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        rank: users.rank,
+        xp: users.xp,
+        isGuest: users.isGuest,
+        createdAt: users.createdAt,
+      })
       .from(sessions)
-      .where(eq(sessions.id, sessionId))
+      .innerJoin(users, eq(users.id, sessions.userId))
+      .where(
+        and(
+          eq(sessions.id, sessionId),
+          gt(sessions.expiresAt, sql`now()`),
+        ),
+      )
       .limit(1);
 
-    if (!session || new Date(session.expiresAt) < new Date()) {
-      return res.status(200).json({ user: null });
-    }
+    const user = rows[0] ?? null;
 
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, session.userId))
-      .limit(1);
-
-    if (!user) {
-      return res.status(200).json({ user: null });
-    }
-
-    return res.status(200).json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        rank: user.rank,
-        xp: user.xp,
-        isGuest: user.isGuest,
-        createdAt: user.createdAt,
-      },
-    });
+    return res.status(200).json({ user });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Internal error.';
     return res.status(500).json({ user: null, error: msg });

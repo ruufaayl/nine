@@ -22,6 +22,16 @@ import { eq } from 'drizzle-orm';
 import { db } from '../src/db/index.js';
 import { sessions, users } from '../src/db/schema.js';
 
+const COOKIE_NAME = '__nine_session';
+
+function parseSessionId(cookieHeader: string): string | null {
+  const match = cookieHeader
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${COOKIE_NAME}=`));
+  return match ? match.slice(COOKIE_NAME.length + 1) || null : null;
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse,
@@ -135,34 +145,24 @@ export default async function handler(
 
   // ── LOGOUT ───────────────────────────────────
   if (intent === 'logout') {
-    const cookieHeader = req.headers.cookie ?? '';
-    const COOKIE_NAME = '__nine_session';
-    const match = cookieHeader
-      .split(';')
-      .map((c) => c.trim())
-      .find((c) => c.startsWith(`${COOKIE_NAME}=`));
-    const sessionId = match ? match.slice(COOKIE_NAME.length + 1) : null;
+    const sessionId = parseSessionId(req.headers.cookie ?? '');
 
     try {
       if (sessionId) {
-        // Check if user is guest — if so, destroy all their data
-        const [session] = await db
-          .select()
+        // Single JOIN: session + user in one query
+        const [row] = await db
+          .select({
+            userId: users.id,
+            isGuest: users.isGuest,
+          })
           .from(sessions)
+          .innerJoin(users, eq(users.id, sessions.userId))
           .where(eq(sessions.id, sessionId))
           .limit(1);
 
-        if (session) {
-          const [user] = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, session.userId))
-            .limit(1);
-
-          if (user?.isGuest) {
-            await destroyGuestData(user.id);
-          }
-
+        if (row?.isGuest) {
+          await destroyGuestData(row.userId); // CASCADE deletes session too
+        } else if (row) {
           await destroySession(sessionId);
         }
       }

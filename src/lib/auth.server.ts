@@ -3,7 +3,7 @@
 // ──────────────────────────────────────────────
 
 import crypto from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, and, gt, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { db } from '../db/index.js';
 import { users, sessions, scores, passwordResets } from '../db/schema.js';
@@ -195,30 +195,31 @@ export async function getUserFromRequest(
 
   if (!sessionId) return null;
 
-  const [session] = await db
-    .select()
+  // Single JOIN: session + user in one round-trip
+  const [row] = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      passwordHash: users.passwordHash,
+      isGuest: users.isGuest,
+      xp: users.xp,
+      rank: users.rank,
+      createdAt: users.createdAt,
+    })
     .from(sessions)
-    .where(eq(sessions.id, sessionId))
+    .innerJoin(users, eq(users.id, sessions.userId))
+    .where(
+      and(
+        eq(sessions.id, sessionId),
+        gt(sessions.expiresAt, sql`now()`),
+      ),
+    )
     .limit(1);
 
-  if (!session) return null;
+  if (!row) return null;
 
-  // Check expiry
-  if (new Date(session.expiresAt) < new Date()) {
-    await destroySession(sessionId);
-    return null;
-  }
-
-  // Fetch user
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, session.userId))
-    .limit(1);
-
-  if (!user) return null;
-
-  return toSafeUser(user);
+  return toSafeUser(row as User);
 }
 
 // ─── Get Session ID from Request ────────────

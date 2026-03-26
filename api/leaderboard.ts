@@ -16,6 +16,9 @@ export default async function handler(
     return res.status(405).json({ players: [], totalCount: 0 });
   }
 
+  // Cache for 30s on Vercel edge — leaderboard doesn't need real-time updates
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+
   try {
     // ── Total registered count (fast, single aggregate) ──
     const [{ value: totalCount }] = await db
