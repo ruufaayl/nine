@@ -17,10 +17,10 @@ import {
   serializeSessionCookie,
   clearSessionCookie,
   type AuthErrors,
-} from '../src/lib/auth.server';
+} from '../src/lib/auth.server.js';
 import { eq } from 'drizzle-orm';
-import { db } from '../src/db';
-import { sessions, users } from '../src/db/schema';
+import { db } from '../src/db/index.js';
+import { sessions, users } from '../src/db/schema.js';
 
 export default async function handler(
   req: VercelRequest,

@@ -5,9 +5,9 @@
 import crypto from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { db } from '../db';
-import { users, sessions, scores, passwordResets } from '../db/schema';
-import type { User } from '../db/schema';
+import { db } from '../db/index.js';
+import { users, sessions, scores, passwordResets } from '../db/schema.js';
+import type { User } from '../db/schema.js';
 
 // ─── Constants ──────────────────────────────
 

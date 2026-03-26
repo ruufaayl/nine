@@ -5,8 +5,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
-import { db } from '../../src/db';
-import { users, sessions, scores } from '../../src/db/schema';
+import { db } from '../../src/db/index.js';
+import { users, sessions, scores } from '../../src/db/schema.js';
 
 const COOKIE_NAME = '__nine_session';
 
