@@ -56,7 +56,7 @@ interface MatchOverPayload {
 // ─── Constants ──────────────────────────────
 
 const WS_URL: string =
-  import.meta.env.VITE_WS_URL || 'http://68.183.186.123:3001';
+  import.meta.env.VITE_WS_URL || 'http://68.183.186.126:3001';
 
 // ─── Guest ID Generator ─────────────────────
 
