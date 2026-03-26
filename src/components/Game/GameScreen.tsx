@@ -578,6 +578,7 @@ export function GameScreen({
     fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         modeId: modeMap[mode],
         score: xp,

@@ -68,6 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ intent: 'login', email, password }),
     });
 
@@ -94,6 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ intent: 'signup', username, email, password }),
     });
 
@@ -111,6 +113,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ intent: 'guest' }),
     });
 
@@ -138,6 +141,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ intent: 'reset_password', email }),
     });
 

@@ -34,7 +34,7 @@ export default async function handler(
 
   const sessionId = getSessionId(req);
   if (!sessionId) {
-    return res.status(401).json({ user: null });
+    return res.status(200).json({ user: null });
   }
 
   try {
@@ -45,7 +45,7 @@ export default async function handler(
       .limit(1);
 
     if (!session || new Date(session.expiresAt) < new Date()) {
-      return res.status(401).json({ user: null });
+      return res.status(200).json({ user: null });
     }
 
     const [user] = await db
@@ -55,7 +55,7 @@ export default async function handler(
       .limit(1);
 
     if (!user) {
-      return res.status(401).json({ user: null });
+      return res.status(200).json({ user: null });
     }
 
     return res.status(200).json({

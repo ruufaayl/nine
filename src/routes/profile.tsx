@@ -31,7 +31,7 @@ const RANK_COLORS: Record<string, { color: string; glow: string }> = {
 // ─── Loader (fetch-based) ───────────────────
 
 export const loader = async (_args: LoaderFunctionArgs) => {
-  const res = await fetch('/api/me');
+  const res = await fetch('/api/me', { credentials: 'include' });
 
   if (!res.ok) {
     return redirect('/auth');
@@ -53,7 +53,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
   }> = [];
 
   try {
-    const scoresRes = await fetch(`/api/profile/scores`);
+    const scoresRes = await fetch('/api/profile/scores', { credentials: 'include' });
     if (scoresRes.ok) {
       const scoresData = await scoresRes.json();
       recentScores = scoresData.scores ?? [];
@@ -78,6 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ intent: 'logout' }),
     });
 

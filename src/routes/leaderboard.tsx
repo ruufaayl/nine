@@ -101,7 +101,7 @@ export default function LeaderboardRoute() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/leaderboard')
+    fetch('/api/leaderboard', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : { entries: [] }))
       .then((data) => {
         setEntries(data.entries ?? []);

@@ -26,7 +26,7 @@ export default function RootLayout() {
 
   // Try to fetch the current session on mount
   useEffect(() => {
-    fetch('/api/me')
+    fetch('/api/me', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) return null;
         return res.json();

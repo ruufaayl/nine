@@ -164,11 +164,11 @@ export async function destroySession(sessionId: string): Promise<void> {
 
 export function serializeSessionCookie(sessionId: string): string {
   const maxAge = SESSION_DURATION_MS / 1000;
-  return `${COOKIE_NAME}=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+  return `${COOKIE_NAME}=${sessionId}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=${maxAge}`;
 }
 
 export function clearSessionCookie(): string {
-  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0`;
 }
 
 function parseSessionIdFromCookie(cookieHeader: string | null): string | null {
