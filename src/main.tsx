@@ -10,7 +10,7 @@ import './index.css';
 import RootLayout from './routes/root';
 import Home from './routes/home';
 import PlayRoute from './routes/play';
-import AuthRoute, { action as authAction } from './routes/auth';
+import AuthRoute, { action as authAction, ErrorBoundary as AuthErrorBoundary } from './routes/auth';
 import LeaderboardRoute from './routes/leaderboard';
 
 // ── Data Router (supports loaders + actions) ──
@@ -25,6 +25,7 @@ const router = createBrowserRouter([
         path: 'auth',
         element: <AuthRoute />,
         action: authAction,
+        errorElement: <AuthErrorBoundary />,
       },
       { path: 'leaderboard', element: <LeaderboardRoute /> },
     ],
