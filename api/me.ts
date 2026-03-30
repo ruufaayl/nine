@@ -51,6 +51,13 @@ export default async function handler(
         email: users.email,
         rank: users.rank,
         xp: users.xp,
+        rankTier: users.rankTier,
+        totalXp: users.totalXp,
+        gamesPlayed: users.gamesPlayed,
+        wins: users.wins,
+        losses: users.losses,
+        avatarUrl: users.avatarUrl,
+        bio: users.bio,
         isGuest: users.isGuest,
         createdAt: users.createdAt,
       })
