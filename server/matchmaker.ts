@@ -1,6 +1,13 @@
 // ──────────────────────────────────────────────
 // NINE — Redis-Backed Matchmaker
+// Difficulty-aware + trophy-range matching
 // ──────────────────────────────────────────────
+
+import {
+  MATCH_TROPHY_RANGE_INITIAL,
+  MATCH_TROPHY_RANGE_EXPAND,
+  MATCH_TROPHY_RANGE_MAX,
+} from '../src/lib/economy';
 
 import Redis from 'ioredis';
 import { randomUUID } from 'node:crypto';
@@ -11,6 +18,8 @@ export interface QueueEntry {
   userId: string;
   socketId: string;
   joinedAt: number;
+  difficulty: string;
+  trophies: number;
 }
 
 export interface MatchResult {
@@ -18,6 +27,7 @@ export interface MatchResult {
   playerA: QueueEntry;
   playerB: QueueEntry;
   modeId: string;
+  difficulty: string;
 }
 
 // ─── Redis Client ───────────────────────────
@@ -37,8 +47,8 @@ redis.on('error', (err) => {
 
 // ─── Queue Keys ─────────────────────────────
 
-function queueKey(modeId: string): string {
-  return `nine:queue:${modeId}`;
+function queueKey(modeId: string, difficulty: string = 'medium'): string {
+  return `nine:queue:${modeId}:${difficulty}`;
 }
 
 function userQueueKey(userId: string): string {
@@ -47,54 +57,74 @@ function userQueueKey(userId: string): string {
 
 // ─── Join Queue ─────────────────────────────
 
-/**
- * Add a player to the matchmaking queue for a given mode.
- * Prevents duplicate entries for the same user.
- */
 export async function joinQueue(
   userId: string,
   modeId: string,
   socketId: string,
+  difficulty: string = 'medium',
+  trophies: number = 0,
 ): Promise<void> {
   const entry: QueueEntry = {
     userId,
     socketId,
     joinedAt: Date.now(),
+    difficulty,
+    trophies,
   };
 
   // Prevent duplicate queue entries
   const existingQueue = await redis.get(userQueueKey(userId));
   if (existingQueue) {
-    // Remove from old queue first
-    await leaveQueue(userId, existingQueue);
+    // Parse out the old difficulty
+    try {
+      const parsed = JSON.parse(existingQueue) as { modeId: string; difficulty: string };
+      await leaveQueue(userId, parsed.modeId, parsed.difficulty);
+    } catch {
+      await leaveQueue(userId, existingQueue);
+    }
   }
 
-  // Push to mode-specific list
-  await redis.rpush(queueKey(modeId), JSON.stringify(entry));
+  // Push to mode+difficulty-specific list
+  await redis.rpush(queueKey(modeId, difficulty), JSON.stringify(entry));
 
   // Track which queue this user is in
-  await redis.set(userQueueKey(userId), modeId, 'EX', 300); // 5 min TTL
+  await redis.set(
+    userQueueKey(userId),
+    JSON.stringify({ modeId, difficulty }),
+    'EX', 300,
+  );
 }
 
 // ─── Leave Queue ────────────────────────────
 
-/**
- * Remove a player from a matchmaking queue.
- */
 export async function leaveQueue(
   userId: string,
   modeId?: string,
+  difficulty?: string,
 ): Promise<void> {
-  const mode = modeId ?? (await redis.get(userQueueKey(userId)));
+  let mode = modeId;
+  let diff = difficulty ?? 'medium';
+
+  if (!mode) {
+    const raw = await redis.get(userQueueKey(userId));
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as { modeId: string; difficulty: string };
+      mode = parsed.modeId;
+      diff = parsed.difficulty;
+    } catch {
+      mode = raw;
+    }
+  }
+
   if (!mode) return;
 
-  // Scan the queue list and remove entries for this user
-  const entries = await redis.lrange(queueKey(mode), 0, -1);
+  const entries = await redis.lrange(queueKey(mode, diff), 0, -1);
   for (const raw of entries) {
     try {
       const entry = JSON.parse(raw) as QueueEntry;
       if (entry.userId === userId) {
-        await redis.lrem(queueKey(mode), 1, raw);
+        await redis.lrem(queueKey(mode, diff), 1, raw);
       }
     } catch {
       // Skip malformed entries
@@ -106,62 +136,94 @@ export async function leaveQueue(
 
 // ─── Check Queue ────────────────────────────
 
-/**
- * Check if a mode queue has ≥ 2 players.
- * If so, pop the first two and return a match.
- * Returns null if no match is available.
- */
 export async function checkQueue(
   modeId: string,
+  difficulty?: string,
 ): Promise<MatchResult | null> {
-  const key = queueKey(modeId);
-  const length = await redis.llen(key);
+  // Scan all difficulty queues for this mode
+  const difficulties = difficulty ? [difficulty] : ['easy', 'medium', 'hard', 'expert'];
 
-  if (length < 2) return null;
+  for (const diff of difficulties) {
+    const key = queueKey(modeId, diff);
+    const length = await redis.llen(key);
 
-  // Pop two entries atomically via a transaction
-  const results = await redis
-    .multi()
-    .lpop(key)
-    .lpop(key)
-    .exec();
+    if (length < 2) continue;
 
-  if (!results || results.length < 2) return null;
+    // Read all entries for trophy-range matching
+    const rawEntries = await redis.lrange(key, 0, -1);
+    const entries: { raw: string; entry: QueueEntry }[] = [];
 
-  const [errA, rawA] = results[0];
-  const [errB, rawB] = results[1];
+    for (const raw of rawEntries) {
+      try {
+        entries.push({ raw, entry: JSON.parse(raw) as QueueEntry });
+      } catch {
+        // Skip malformed
+      }
+    }
 
-  if (errA || errB || !rawA || !rawB) return null;
+    if (entries.length < 2) continue;
 
-  let playerA: QueueEntry;
-  let playerB: QueueEntry;
+    // Try to find a trophy-compatible pair
+    const now = Date.now();
+    let bestPair: [number, number] | null = null;
+    let bestDiff = Infinity;
 
-  try {
-    playerA = JSON.parse(rawA as string) as QueueEntry;
-    playerB = JSON.parse(rawB as string) as QueueEntry;
-  } catch {
-    return null;
+    for (let i = 0; i < entries.length; i++) {
+      const a = entries[i].entry;
+      const aWaitSec = (now - a.joinedAt) / 1000;
+      const aRange = Math.min(
+        MATCH_TROPHY_RANGE_MAX,
+        MATCH_TROPHY_RANGE_INITIAL + Math.floor(aWaitSec / 10) * MATCH_TROPHY_RANGE_EXPAND,
+      );
+
+      for (let j = i + 1; j < entries.length; j++) {
+        const b = entries[j].entry;
+        const bWaitSec = (now - b.joinedAt) / 1000;
+        const bRange = Math.min(
+          MATCH_TROPHY_RANGE_MAX,
+          MATCH_TROPHY_RANGE_INITIAL + Math.floor(bWaitSec / 10) * MATCH_TROPHY_RANGE_EXPAND,
+        );
+
+        const trophyDiff = Math.abs(a.trophies - b.trophies);
+        const maxRange = Math.max(aRange, bRange);
+
+        if (trophyDiff <= maxRange && trophyDiff < bestDiff) {
+          bestDiff = trophyDiff;
+          bestPair = [i, j];
+        }
+      }
+    }
+
+    if (!bestPair) continue;
+
+    const [idxA, idxB] = bestPair;
+    const playerA = entries[idxA].entry;
+    const playerB = entries[idxB].entry;
+
+    // Remove both from the queue (remove higher index first to avoid shift)
+    await redis.lrem(key, 1, entries[idxB].raw);
+    await redis.lrem(key, 1, entries[idxA].raw);
+
+    // Clean up user-queue tracking
+    await redis.del(userQueueKey(playerA.userId));
+    await redis.del(userQueueKey(playerB.userId));
+
+    const roomId = `room_${randomUUID().slice(0, 8)}`;
+
+    return {
+      roomId,
+      playerA,
+      playerB,
+      modeId,
+      difficulty: diff,
+    };
   }
 
-  // Clean up user-queue tracking
-  await redis.del(userQueueKey(playerA.userId));
-  await redis.del(userQueueKey(playerB.userId));
-
-  const roomId = `room_${randomUUID().slice(0, 8)}`;
-
-  return {
-    roomId,
-    playerA,
-    playerB,
-    modeId,
-  };
+  return null;
 }
 
 // ─── Cleanup ────────────────────────────────
 
-/**
- * Graceful shutdown — close Redis connection.
- */
 export async function shutdownMatchmaker(): Promise<void> {
   await redis.quit();
 }

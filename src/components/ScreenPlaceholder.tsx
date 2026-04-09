@@ -33,8 +33,8 @@ export function ScreenPlaceholder({ id, title, cluster, accent }: Props) {
 
       {/* Screen ID */}
       <span
-        className="font-[var(--font-display)] text-7xl font-black tabular-nums"
-        style={{ color: accent, fontFamily: 'var(--font-display)' }}
+        className="font-[var(--font-primary)] text-7xl font-black tabular-nums"
+        style={{ color: accent, fontFamily: 'var(--font-primary)' }}
       >
         {id}
       </span>
@@ -42,7 +42,7 @@ export function ScreenPlaceholder({ id, title, cluster, accent }: Props) {
       {/* Title */}
       <h1
         className="text-2xl font-bold uppercase tracking-[0.2em] text-white/80"
-        style={{ fontFamily: 'var(--font-display)' }}
+        style={{ fontFamily: 'var(--font-primary)' }}
       >
         {title}
       </h1>

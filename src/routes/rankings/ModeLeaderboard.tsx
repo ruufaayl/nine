@@ -47,7 +47,7 @@ export default function ModeLeaderboard() {
     <div className="relative min-h-screen text-white">
       <div
         className="fixed inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, #1a160a 0%, #0a0a0f 50%, #060609 100%)' }}
+        style={{ background: 'var(--bg-primary)' }}
       />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 sm:px-6 py-8">
@@ -68,7 +68,7 @@ export default function ModeLeaderboard() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Mode Rankings
           </h1>
@@ -90,9 +90,9 @@ export default function ModeLeaderboard() {
                 onClick={() => setSelectedModeId(m.id)}
                 className="shrink-0 text-[0.5rem] font-bold uppercase tracking-[0.1em] px-3 py-1.5 cursor-pointer transition-all"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   background: active ? mAccent : 'transparent',
-                  color: active ? '#0a0a0f' : 'rgba(255,255,255,0.25)',
+                  color: active ? 'var(--bg-primary)' : 'rgba(255,255,255,0.25)',
                   border: `1px solid ${active ? mAccent : 'rgba(255,255,255,0.06)'}`,
                 }}
               >
@@ -112,7 +112,7 @@ export default function ModeLeaderboard() {
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
           <span
             className="text-[0.55rem] font-bold uppercase tracking-[0.2em]"
-            style={{ fontFamily: 'var(--font-display)', color: accent }}
+            style={{ fontFamily: 'var(--font-primary)', color: accent }}
           >
             {mode?.name ?? selectedModeId} — Top Scores
           </span>
@@ -141,11 +141,11 @@ export default function ModeLeaderboard() {
                 className="grid items-center gap-2 px-5 py-3"
                 style={{
                   gridTemplateColumns: '1.5rem 1fr 3.5rem 3rem 4rem',
-                  background: isSelf ? `${accent}08` : '#0c0c14',
+                  background: isSelf ? `${accent}08` : 'var(--bg-surface)',
                   border: isSelf
                     ? `2px solid ${accent}`
                     : `1px solid ${podiumColor ? `${podiumColor}20` : 'rgba(255,255,255,0.03)'}`,
-                  boxShadow: isSelf ? `4px 4px 0px ${accent}` : 'none',
+                  boxShadow: isSelf ? 'var(--shadow-md)' : 'none',
                 }}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -153,14 +153,14 @@ export default function ModeLeaderboard() {
               >
                 <span
                   className="text-xs font-black tabular-nums"
-                  style={{ fontFamily: 'var(--font-display)', color: podiumColor ?? 'rgba(255,255,255,0.2)' }}
+                  style={{ fontFamily: 'var(--font-primary)', color: podiumColor ?? 'rgba(255,255,255,0.2)' }}
                 >
                   {i + 1}
                 </span>
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className="text-xs font-bold uppercase tracking-[0.08em] truncate"
-                    style={{ fontFamily: 'var(--font-display)', color: isSelf ? accent : 'rgba(255,255,255,0.6)' }}
+                    style={{ fontFamily: 'var(--font-primary)', color: isSelf ? accent : 'rgba(255,255,255,0.6)' }}
                   >
                     {s.username}
                   </span>
@@ -172,7 +172,7 @@ export default function ModeLeaderboard() {
                 </div>
                 <span
                   className="text-[0.6rem] font-bold tabular-nums text-right"
-                  style={{ fontFamily: 'var(--font-display)', color: podiumColor ?? accent }}
+                  style={{ fontFamily: 'var(--font-primary)', color: podiumColor ?? accent }}
                 >
                   {s.score.toLocaleString()}
                 </span>

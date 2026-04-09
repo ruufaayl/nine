@@ -35,7 +35,7 @@ export default function SeasonRankings() {
     <div className="relative min-h-screen text-white">
       <div
         className="fixed inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, #1a160a 0%, #0a0a0f 50%, #060609 100%)' }}
+        style={{ background: 'var(--bg-primary)' }}
       />
 
       <div className="relative z-10 w-full max-w-2xl mx-auto px-4 sm:px-6 py-8">
@@ -56,7 +56,7 @@ export default function SeasonRankings() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)', color: RANK_GOLD }}
+            style={{ fontFamily: 'var(--font-primary)', color: RANK_GOLD }}
           >
             Season 3
           </h1>
@@ -74,9 +74,9 @@ export default function SeasonRankings() {
                 key={tier.name}
                 className="relative overflow-hidden px-5 py-4"
                 style={{
-                  background: '#0c0c14',
+                  background: 'var(--bg-surface)',
                   border: `2px solid ${tier.color}`,
-                  boxShadow: `4px 4px 0px ${tier.color}`,
+                  boxShadow: 'var(--shadow-md)',
                 }}
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -96,7 +96,7 @@ export default function SeasonRankings() {
                   <div
                     className="w-10 h-10 flex items-center justify-center shrink-0 text-lg font-black"
                     style={{
-                      fontFamily: 'var(--font-display)',
+                      fontFamily: 'var(--font-primary)',
                       color: tier.color,
                       border: `2px solid ${tier.color}40`,
                     }}
@@ -108,7 +108,7 @@ export default function SeasonRankings() {
                   <div className="flex-1 min-w-0">
                     <span
                       className="text-sm font-bold uppercase tracking-[0.1em] block"
-                      style={{ fontFamily: 'var(--font-display)', color: tier.color }}
+                      style={{ fontFamily: 'var(--font-primary)', color: tier.color }}
                     >
                       {tier.name}
                     </span>
@@ -119,7 +119,7 @@ export default function SeasonRankings() {
                   <div className="text-right shrink-0">
                     <span
                       className="text-sm font-black tabular-nums block"
-                      style={{ fontFamily: 'var(--font-display)', color: tier.color }}
+                      style={{ fontFamily: 'var(--font-primary)', color: tier.color }}
                     >
                       {tier.players}
                     </span>

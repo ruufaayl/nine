@@ -1,27 +1,21 @@
 // ──────────────────────────────────────────────
-// NINE — Game State Hook (single source of truth)
+// NINE — Game State Hook (Prime Grid Offline)
+// 3-mistake rule, server-validated scoring
 // ──────────────────────────────────────────────
 
 import { useCallback, useReducer } from 'react';
 import type {
   Cell,
-  CharacterTheme,
   Difficulty,
-  GameMode,
   Grid,
   GridRow,
 } from '../types/game';
 import { generatePuzzle, getPeers } from '../lib/sudoku';
-import { getThemeById } from '../lib/themes';
+import { MAX_MISTAKES, TIME_LIMITS, calculateXP } from '../lib/economy';
 
 // ─── Constants ───────────────────────────────
 
 const SIZE = 9;
-const SPRINT_DURATION = 180; // 3 minutes
-const FOG_RIPPLE_RADIUS = 1; // reveal cells within Manhattan distance 1
-
-/** XP awarded per correct fill in Sprint mode. */
-const SPRINT_XP_PER_FILL = 10;
 
 // ─── State ───────────────────────────────────
 
@@ -31,16 +25,14 @@ interface GameState {
   solutionGrid: Grid | null;
   selectedCell: { row: number; col: number } | null;
   isPencilMode: boolean;
-  errors: Set<string>;
+  errors: Set<string>;        // currently wrong cells (visual)
+  mistakes: number;            // permanent mistake counter (NEVER decrements)
   isComplete: boolean;
-  activeTheme: CharacterTheme | null;
-  // Mode
-  mode: GameMode;
-  // Sprint
-  sprintTimeRemaining: number;
-  xp: number;
-  // Fog of War
-  foggedCells: Set<string>;
+  isGameOver: boolean;         // true when mistakes >= 3
+  difficulty: Difficulty;
+  startTime: number;           // timestamp when game began
+  lastCorrectCell: { row: number; col: number } | null;
+  lastErrorCell: { row: number; col: number } | null;
 }
 
 const INITIAL_STATE: GameState = {
@@ -50,23 +42,25 @@ const INITIAL_STATE: GameState = {
   selectedCell: null,
   isPencilMode: false,
   errors: new Set<string>(),
+  mistakes: 0,
   isComplete: false,
-  activeTheme: null,
-  mode: 'classic',
-  sprintTimeRemaining: SPRINT_DURATION,
-  xp: 0,
-  foggedCells: new Set<string>(),
+  isGameOver: false,
+  difficulty: 'medium',
+  startTime: 0,
+  lastCorrectCell: null,
+  lastErrorCell: null,
 };
 
 // ─── Actions ─────────────────────────────────
 
 type GameAction =
-  | { type: 'INIT_GAME'; difficulty: Difficulty; characterId: string; mode: GameMode }
+  | { type: 'INIT_GAME'; difficulty: Difficulty }
   | { type: 'SELECT_CELL'; row: number; col: number }
   | { type: 'FILL_CELL'; value: number }
+  | { type: 'ERASE_CELL' }
   | { type: 'TOGGLE_PENCIL' }
   | { type: 'RESET_GAME' }
-  | { type: 'SPRINT_TICK' };
+  | { type: 'CLEAR_ANIMATION' };
 
 // ─── Helpers ─────────────────────────────────
 
@@ -97,72 +91,13 @@ function cellKey(row: number, col: number): string {
   return `${row},${col}`;
 }
 
-function checkComplete(grid: Grid, errors: Set<string>): boolean {
-  if (errors.size > 0) return false;
+function checkComplete(grid: Grid): boolean {
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      if (grid[r][c].value === null) return false;
+      if (grid[r][c].value === null || !grid[r][c].isValid) return false;
     }
   }
   return true;
-}
-
-/** Build the initial fog set: all non-given cells are fogged. */
-function buildInitialFog(grid: Grid): Set<string> {
-  const fogged = new Set<string>();
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
-      if (!grid[r][c].isGiven) {
-        fogged.add(cellKey(r, c));
-      }
-    }
-  }
-  return fogged;
-}
-
-/** Lift fog within Manhattan distance `radius` of (row, col). */
-function liftFog(
-  fogged: Set<string>,
-  row: number,
-  col: number,
-  radius: number,
-): Set<string> {
-  const next = new Set(fogged);
-  for (let dr = -radius; dr <= radius; dr++) {
-    for (let dc = -radius; dc <= radius; dc++) {
-      if (Math.abs(dr) + Math.abs(dc) > radius) continue;
-      const nr = row + dr;
-      const nc = col + dc;
-      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
-        next.delete(cellKey(nr, nc));
-      }
-    }
-  }
-  return next;
-}
-
-/** Re-fog cells within Manhattan distance `radius` of (row, col), except given cells. */
-function reFog(
-  fogged: Set<string>,
-  grid: Grid,
-  row: number,
-  col: number,
-  radius: number,
-): Set<string> {
-  const next = new Set(fogged);
-  for (let dr = -radius; dr <= radius; dr++) {
-    for (let dc = -radius; dc <= radius; dc++) {
-      if (Math.abs(dr) + Math.abs(dc) > radius) continue;
-      const nr = row + dr;
-      const nc = col + dc;
-      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
-        if (!grid[nr][nc].isGiven) {
-          next.add(cellKey(nr, nc));
-        }
-      }
-    }
-  }
-  return next;
 }
 
 // ─── Reducer ─────────────────────────────────
@@ -172,12 +107,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'INIT_GAME': {
       const puzzle = generatePuzzle(action.difficulty);
       const currentGrid = cloneGrid(puzzle.initial);
-      const theme = getThemeById(action.characterId) ?? null;
-
-      const foggedCells =
-        action.mode === 'fogOfWar'
-          ? buildInitialFog(currentGrid)
-          : new Set<string>();
 
       return {
         currentGrid,
@@ -186,16 +115,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         selectedCell: null,
         isPencilMode: false,
         errors: new Set<string>(),
+        mistakes: 0,
         isComplete: false,
-        activeTheme: theme,
-        mode: action.mode,
-        sprintTimeRemaining: action.mode === 'sprint' ? SPRINT_DURATION : 0,
-        xp: 0,
-        foggedCells,
+        isGameOver: false,
+        difficulty: action.difficulty,
+        startTime: Date.now(),
+        lastCorrectCell: null,
+        lastErrorCell: null,
       };
     }
 
     case 'SELECT_CELL': {
+      if (state.isGameOver) return state;
       return {
         ...state,
         selectedCell: { row: action.row, col: action.col },
@@ -203,23 +134,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'FILL_CELL': {
-      const { currentGrid, solutionGrid, selectedCell, isPencilMode, mode } = state;
+      const { currentGrid, solutionGrid, selectedCell, isPencilMode } = state;
       if (!currentGrid || !solutionGrid || !selectedCell) return state;
+      if (state.isGameOver || state.isComplete) return state;
 
       const { row, col } = selectedCell;
       const cell = currentGrid[row][col];
 
-      // Given cells are immutable
+      // Given cells and locked cells are immutable
       if (cell.isGiven) return state;
 
       const nextGrid = cloneGrid(currentGrid);
       const nextErrors = new Set(state.errors);
       const key = cellKey(row, col);
-      let nextXp = state.xp;
-      let nextFog = state.foggedCells;
+      let nextMistakes = state.mistakes;
 
       if (isPencilMode) {
-        // Toggle pencil mark — only allowed when cell has no value
+        // Toggle pencil mark — only when cell is empty
         if (nextGrid[row][col].value !== null) return state;
 
         const marks = nextGrid[row][col].pencilMarks;
@@ -235,7 +166,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       // Normal fill mode
       const targetCell = nextGrid[row][col];
 
-      // If same value already placed, clear it
+      // If same value already placed, this is a toggle-off (erase)
       if (targetCell.value === action.value) {
         targetCell.value = null;
         targetCell.isValid = true;
@@ -246,53 +177,81 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           currentGrid: nextGrid,
           errors: nextErrors,
           isComplete: false,
+          lastCorrectCell: null,
+          lastErrorCell: null,
         };
       }
 
-      // Set the value and clear pencil marks on this cell
+      // Set the value
       targetCell.value = action.value;
       targetCell.pencilMarks.clear();
 
-      // Check against solution
+      // Check against solution — THE ONLY SOURCE OF TRUTH
       const correct = solutionGrid[row][col].value === action.value;
       targetCell.isValid = correct;
 
+      let lastCorrectCell = null;
+      let lastErrorCell = null;
+
       if (correct) {
         nextErrors.delete(key);
+        lastCorrectCell = { row, col };
 
-        // Sprint XP
-        if (mode === 'sprint') {
-          nextXp += SPRINT_XP_PER_FILL;
-        }
-
-        // Fog of War: lift fog around correct fill
-        if (mode === 'fogOfWar') {
-          nextFog = liftFog(nextFog, row, col, FOG_RIPPLE_RADIUS);
+        // Remove this value from pencil marks of all peers
+        const peers = getPeers(row, col);
+        for (const [pr, pc] of peers) {
+          nextGrid[pr][pc].pencilMarks.delete(action.value);
         }
       } else {
         nextErrors.add(key);
+        lastErrorCell = { row, col };
 
-        // Fog of War: re-fog around wrong fill
-        if (mode === 'fogOfWar') {
-          nextFog = reFog(nextFog, nextGrid, row, col, FOG_RIPPLE_RADIUS);
-        }
+        // PERMANENT MISTAKE — even if undone later, this counts
+        nextMistakes++;
       }
 
-      // Remove this value from pencil marks of all peers
-      const peers = getPeers(row, col);
-      for (const [pr, pc] of peers) {
-        nextGrid[pr][pc].pencilMarks.delete(action.value);
-      }
-
-      const isComplete = checkComplete(nextGrid, nextErrors);
+      const isGameOver = nextMistakes >= MAX_MISTAKES;
+      const isComplete = !isGameOver && checkComplete(nextGrid);
 
       return {
         ...state,
         currentGrid: nextGrid,
         errors: nextErrors,
+        mistakes: nextMistakes,
         isComplete,
-        xp: nextXp,
-        foggedCells: nextFog,
+        isGameOver,
+        lastCorrectCell,
+        lastErrorCell,
+      };
+    }
+
+    case 'ERASE_CELL': {
+      const { currentGrid, selectedCell } = state;
+      if (!currentGrid || !selectedCell) return state;
+      if (state.isGameOver || state.isComplete) return state;
+
+      const { row, col } = selectedCell;
+      const cell = currentGrid[row][col];
+
+      if (cell.isGiven || cell.value === null) return state;
+
+      const nextGrid = cloneGrid(currentGrid);
+      const nextErrors = new Set(state.errors);
+      const key = cellKey(row, col);
+
+      nextGrid[row][col].value = null;
+      nextGrid[row][col].isValid = true;
+      nextErrors.delete(key);
+
+      // NOTE: mistakes counter does NOT decrement on erase
+
+      return {
+        ...state,
+        currentGrid: nextGrid,
+        errors: nextErrors,
+        isComplete: false,
+        lastCorrectCell: null,
+        lastErrorCell: null,
       };
     }
 
@@ -303,30 +262,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'RESET_GAME': {
       if (!state.initialGrid) return state;
 
-      const currentGrid = cloneGrid(state.initialGrid);
-      const foggedCells =
-        state.mode === 'fogOfWar'
-          ? buildInitialFog(currentGrid)
-          : new Set<string>();
-
       return {
         ...state,
-        currentGrid,
+        currentGrid: cloneGrid(state.initialGrid),
         selectedCell: null,
         isPencilMode: false,
         errors: new Set<string>(),
+        mistakes: 0,
         isComplete: false,
-        xp: 0,
-        sprintTimeRemaining:
-          state.mode === 'sprint' ? SPRINT_DURATION : state.sprintTimeRemaining,
-        foggedCells,
+        isGameOver: false,
+        startTime: Date.now(),
+        lastCorrectCell: null,
+        lastErrorCell: null,
       };
     }
 
-    case 'SPRINT_TICK': {
-      if (state.mode !== 'sprint') return state;
-      const next = state.sprintTimeRemaining - 1;
-      return { ...state, sprintTimeRemaining: Math.max(0, next) };
+    case 'CLEAR_ANIMATION': {
+      return {
+        ...state,
+        lastCorrectCell: null,
+        lastErrorCell: null,
+      };
     }
 
     default:
@@ -340,8 +296,8 @@ export function useGameState() {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_STATE);
 
   const initGame = useCallback(
-    (difficulty: Difficulty, characterId: string, mode: GameMode = 'classic') => {
-      dispatch({ type: 'INIT_GAME', difficulty, characterId, mode });
+    (difficulty: Difficulty) => {
+      dispatch({ type: 'INIT_GAME', difficulty });
     },
     [],
   );
@@ -354,6 +310,10 @@ export function useGameState() {
     dispatch({ type: 'FILL_CELL', value });
   }, []);
 
+  const eraseCell = useCallback(() => {
+    dispatch({ type: 'ERASE_CELL' });
+  }, []);
+
   const togglePencil = useCallback(() => {
     dispatch({ type: 'TOGGLE_PENCIL' });
   }, []);
@@ -362,9 +322,16 @@ export function useGameState() {
     dispatch({ type: 'RESET_GAME' });
   }, []);
 
-  const sprintTick = useCallback(() => {
-    dispatch({ type: 'SPRINT_TICK' });
+  const clearAnimation = useCallback(() => {
+    dispatch({ type: 'CLEAR_ANIMATION' });
   }, []);
+
+  // Derived values
+  const elapsedMs = state.startTime ? Date.now() - state.startTime : 0;
+  const timeLimitMs = (TIME_LIMITS[state.difficulty] ?? 900) * 1000;
+  const earnedXP = state.isComplete
+    ? calculateXP(state.difficulty, elapsedMs, timeLimitMs, state.mistakes)
+    : 0;
 
   return {
     // State
@@ -374,19 +341,22 @@ export function useGameState() {
     selectedCell: state.selectedCell,
     isPencilMode: state.isPencilMode,
     errors: state.errors,
+    mistakes: state.mistakes,
     isComplete: state.isComplete,
-    activeTheme: state.activeTheme,
-    mode: state.mode,
-    sprintTimeRemaining: state.sprintTimeRemaining,
-    xp: state.xp,
-    foggedCells: state.foggedCells,
+    isGameOver: state.isGameOver,
+    difficulty: state.difficulty,
+    startTime: state.startTime,
+    lastCorrectCell: state.lastCorrectCell,
+    lastErrorCell: state.lastErrorCell,
+    earnedXP,
 
     // Actions
     initGame,
     selectCell,
     fillCell,
+    eraseCell,
     togglePencil,
     resetGame,
-    sprintTick,
+    clearAnimation,
   } as const;
 }

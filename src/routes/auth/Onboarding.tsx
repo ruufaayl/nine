@@ -19,9 +19,9 @@ const AVATARS = [
 ] as const;
 
 const DIFFICULTIES = [
-  { id: 'trainee',     label: 'Trainee',     desc: 'Guided experience. Perfect for learning.', accent: 'var(--electric-lime)' },
-  { id: 'operative',   label: 'Operative',   desc: 'Standard challenge. The real NINE experience.', accent: 'var(--cyber-cyan)' },
-  { id: 'mastermind',  label: 'Mastermind',  desc: 'Maximum difficulty. No mercy.', accent: 'var(--neon-magenta)' },
+  { id: 'trainee',     label: 'Trainee',     desc: 'Guided experience. Perfect for learning.', accent: 'var(--accent-success)' },
+  { id: 'operative',   label: 'Operative',   desc: 'Standard challenge. The real NINE experience.', accent: 'var(--accent-secondary)' },
+  { id: 'mastermind',  label: 'Mastermind',  desc: 'Maximum difficulty. No mercy.', accent: 'var(--accent-primary)' },
 ] as const;
 
 type Step = 0 | 1 | 2;
@@ -82,10 +82,10 @@ export default function Onboarding() {
             <div
               className="w-8 h-8 flex items-center justify-center text-[0.55rem] font-bold"
               style={{
-                fontFamily: 'var(--font-display)',
-                background: i <= step ? 'var(--neon-magenta)' : 'transparent',
-                color: i <= step ? '#0a0a0f' : 'rgba(255,255,255,0.2)',
-                border: `2px solid ${i <= step ? 'var(--neon-magenta)' : 'rgba(255,255,255,0.1)'}`,
+                fontFamily: 'var(--font-primary)',
+                background: i <= step ? 'var(--accent-primary)' : 'transparent',
+                color: i <= step ? 'var(--bg-primary)' : 'rgba(255,255,255,0.2)',
+                border: `2px solid ${i <= step ? 'var(--accent-primary)' : 'rgba(255,255,255,0.1)'}`,
                 transition: 'all 0.3s',
               }}
             >
@@ -95,7 +95,7 @@ export default function Onboarding() {
               <div
                 className="w-8 h-px"
                 style={{
-                  background: i < step ? 'var(--neon-magenta)' : 'rgba(255,255,255,0.08)',
+                  background: i < step ? 'var(--accent-primary)' : 'rgba(255,255,255,0.08)',
                   transition: 'background 0.3s',
                 }}
               />
@@ -108,7 +108,7 @@ export default function Onboarding() {
       <motion.h2
         key={step}
         className="text-xl font-black uppercase tracking-[0.15em] text-white mb-1"
-        style={{ fontFamily: 'var(--font-display)' }}
+        style={{ fontFamily: 'var(--font-primary)' }}
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
@@ -145,7 +145,7 @@ export default function Onboarding() {
                   className="w-full px-4 py-3.5 text-sm text-white bg-transparent outline-none uppercase tracking-wider"
                   style={{
                     border: `2px solid ${usernameError ? '#ff6b6b' : 'rgba(255,255,255,0.1)'}`,
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-primary)',
                   }}
                   placeholder="AGENT_ZERO"
                   autoFocus
@@ -179,9 +179,9 @@ export default function Onboarding() {
                     onClick={() => setAvatar(a.id)}
                     className="flex flex-col items-center gap-2 py-5 cursor-pointer"
                     style={{
-                      background: '#0c0c14',
-                      border: `2px solid ${selected ? 'var(--neon-magenta)' : 'rgba(255,255,255,0.08)'}`,
-                      boxShadow: selected ? '4px 4px 0px var(--neon-magenta)' : '4px 4px 0px rgba(255,255,255,0.03)',
+                      background: 'var(--bg-surface)',
+                      border: `2px solid ${selected ? 'var(--accent-primary)' : 'rgba(255,255,255,0.08)'}`,
+                      boxShadow: selected ? 'var(--shadow-md)' : 'var(--shadow-sm)',
                       transition: 'all 0.2s',
                     }}
                     whileHover={{ y: -2 }}
@@ -189,15 +189,15 @@ export default function Onboarding() {
                   >
                     <span
                       className="text-2xl"
-                      style={{ color: selected ? 'var(--neon-magenta)' : 'rgba(255,255,255,0.3)' }}
+                      style={{ color: selected ? 'var(--accent-primary)' : 'rgba(255,255,255,0.3)' }}
                     >
                       {a.glyph}
                     </span>
                     <span
                       className="text-[0.45rem] uppercase tracking-[0.2em]"
                       style={{
-                        fontFamily: 'var(--font-display)',
-                        color: selected ? 'var(--neon-magenta)' : 'rgba(255,255,255,0.2)',
+                        fontFamily: 'var(--font-primary)',
+                        color: selected ? 'var(--accent-primary)' : 'rgba(255,255,255,0.2)',
                       }}
                     >
                       {a.label}
@@ -227,9 +227,9 @@ export default function Onboarding() {
                     onClick={() => setDifficulty(d.id)}
                     className="flex items-center gap-4 px-5 py-4 text-left cursor-pointer w-full"
                     style={{
-                      background: '#0c0c14',
+                      background: 'var(--bg-surface)',
                       border: `2px solid ${selected ? d.accent : 'rgba(255,255,255,0.08)'}`,
-                      boxShadow: selected ? `4px 4px 0px ${d.accent}` : '4px 4px 0px rgba(255,255,255,0.03)',
+                      boxShadow: selected ? 'var(--shadow-md)' : 'var(--shadow-sm)',
                       transition: 'all 0.2s',
                     }}
                     whileHover={{ y: -2 }}
@@ -247,7 +247,7 @@ export default function Onboarding() {
                       <span
                         className="text-sm font-bold uppercase tracking-[0.1em] block"
                         style={{
-                          fontFamily: 'var(--font-display)',
+                          fontFamily: 'var(--font-primary)',
                           color: selected ? d.accent : 'rgba(255,255,255,0.5)',
                         }}
                       >
@@ -270,10 +270,10 @@ export default function Onboarding() {
             onClick={goBack}
             className="px-6 py-3 text-[0.6rem] font-bold uppercase tracking-[0.2em] cursor-pointer"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: 'rgba(255,255,255,0.4)',
               border: '2px solid rgba(255,255,255,0.1)',
-              boxShadow: '4px 4px 0px rgba(255,255,255,0.04)',
+              boxShadow: 'var(--shadow-sm)',
             }}
             whileHover={{ borderColor: 'rgba(255,255,255,0.25)' }}
             whileTap={{ scale: 0.97 }}
@@ -286,12 +286,12 @@ export default function Onboarding() {
           onClick={step === 2 ? handleComplete : goNext}
           className="flex-1 py-3 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
           style={{
-            fontFamily: 'var(--font-display)',
-            background: step === 2 ? 'var(--electric-lime)' : 'var(--neon-magenta)',
-            color: '#0a0a0f',
-            boxShadow: '4px 4px 0px #fff',
+            fontFamily: 'var(--font-primary)',
+            background: step === 2 ? 'var(--accent-success)' : 'var(--accent-primary)',
+            color: 'var(--bg-primary)',
+            boxShadow: 'var(--shadow-md)',
           }}
-          whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+          whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
           whileTap={{ scale: 0.97 }}
         >
           {step === 2 ? 'Launch NINE' : 'Continue'}

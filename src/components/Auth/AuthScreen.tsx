@@ -137,7 +137,7 @@ export function AuthScreen() {
   const switchView = useCallback((v: AuthView) => setView(v), []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-[#0a0a0f]">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-[var(--bg-primary)]">
       {/* Background grid */}
       <svg
         className="fixed inset-0 w-full h-full pointer-events-none z-0"
@@ -424,7 +424,7 @@ function SubmitButton({
       )}
       style={{
         background: accent ? 'rgba(74,144,226,0.15)' : '#4a90e2',
-        color: accent ? '#4a90e2' : '#0a0a0f',
+        color: accent ? '#4a90e2' : 'var(--bg-primary)',
         border: accent ? '1px solid rgba(74,144,226,0.3)' : 'none',
       }}
       whileHover={!isSubmitting ? { scale: 1.02, opacity: 0.9 } : undefined}

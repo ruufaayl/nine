@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// NINE — SudokuGrid Component
+// NINE — SudokuGrid Component (Liquid Design)
 // ──────────────────────────────────────────────
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -15,9 +15,13 @@ interface SudokuGridProps {
   selectedCell: { row: number; col: number } | null;
   errors: Set<string>;
   isPencilMode: boolean;
-  foggedCells: Set<string>;
+  foggedCells?: Set<string>;
+  lastCorrectCell?: { row: number; col: number } | null;
+  lastErrorCell?: { row: number; col: number } | null;
+  lockedCells?: Set<string>;
   onSelectCell: (row: number, col: number) => void;
   onFillCell: (value: number) => void;
+  onErase: () => void;
   onTogglePencil: () => void;
 }
 
@@ -27,11 +31,7 @@ function cellKey(row: number, col: number): string {
   return `${row},${col}`;
 }
 
-/** Returns the set of peer keys for the selected cell. */
-function getPeerKeys(
-  row: number,
-  col: number,
-): Set<string> {
+function getPeerKeys(row: number, col: number): Set<string> {
   const peers = getPeers(row, col);
   const keys = new Set<string>();
   for (const [pr, pc] of peers) {
@@ -48,13 +48,16 @@ export function SudokuGrid({
   errors,
   isPencilMode,
   foggedCells,
+  lastCorrectCell,
+  lastErrorCell,
+  lockedCells,
   onSelectCell,
   onFillCell,
+  onErase,
   onTogglePencil,
 }: SudokuGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Derive peer keys and matching value once per render
   const peerKeys = selectedCell
     ? getPeerKeys(selectedCell.row, selectedCell.col)
     : new Set<string>();
@@ -63,13 +66,12 @@ export function SudokuGrid({
     ? grid[selectedCell.row][selectedCell.col].value
     : null;
 
-  // ── Keyboard navigation ──────────────────────
+  // ── Keyboard navigation ──
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Move selection with arrow keys
       if (
         selectedCell &&
         ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
@@ -89,26 +91,18 @@ export function SudokuGrid({
         return;
       }
 
-      // Number keys 1-9
       if (/^[1-9]$/.test(e.key)) {
         e.preventDefault();
         onFillCell(Number(e.key));
         return;
       }
 
-      // Backspace / Delete — fill same value to clear it
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
-        if (selectedCell) {
-          const cell = grid[selectedCell.row][selectedCell.col];
-          if (!cell.isGiven && cell.value !== null) {
-            onFillCell(cell.value);
-          }
-        }
+        onErase();
         return;
       }
 
-      // P — toggle pencil mode
       if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
         onTogglePencil();
@@ -117,7 +111,7 @@ export function SudokuGrid({
 
     el.addEventListener('keydown', handleKeyDown);
     return () => el.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCell, grid, onSelectCell, onFillCell, onTogglePencil]);
+  }, [selectedCell, grid, onSelectCell, onFillCell, onErase, onTogglePencil]);
 
   const handleCellClick = useCallback(
     (row: number, col: number) => {
@@ -133,12 +127,15 @@ export function SudokuGrid({
       className={clsx(
         'relative grid grid-cols-9 grid-rows-9',
         'outline-none focus:outline-none',
-        'border-2 rounded-sm',
+        'overflow-hidden',
       )}
       style={{
-        borderColor: 'var(--color-grid-lines)',
-        width: 'min(90vw, 90vh, 540px)',
-        height: 'min(90vw, 90vh, 540px)',
+        width: 'min(88vw, 88vh, 480px)',
+        height: 'min(88vw, 88vh, 480px)',
+        borderRadius: 'var(--radius-lg)',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-lg)',
       }}
       role="grid"
       aria-label="Sudoku board"
@@ -154,10 +151,14 @@ export function SudokuGrid({
             selectedValue !== null &&
             cell.value === selectedValue;
           const isError = errors.has(key);
-          const isFogged = foggedCells.has(key);
-          const boxIdx = getBoxIndex(r, c);
+          const isFogged = foggedCells?.has(key) ?? false;
+          const isCorrectFlash =
+            lastCorrectCell?.row === r && lastCorrectCell?.col === c;
+          const isErrorShake =
+            lastErrorCell?.row === r && lastErrorCell?.col === c;
+          const isLockedByOpponent = lockedCells?.has(key) ?? false;
 
-          // Box-boundary indices: columns 2,5 get heavy right; rows 2,5 get heavy bottom
+          // Box boundary borders
           const isBoxRight = c === 2 || c === 5;
           const isBoxBottom = r === 2 || r === 5;
           const isLastCol = c === 8;
@@ -166,22 +167,22 @@ export function SudokuGrid({
           return (
             <div
               key={key}
-              className={clsx(
-                'relative',
-                // Right borders — heavy at box boundaries
-                !isLastCol && isBoxRight && 'border-r-[3px]',
-                !isLastCol && !isBoxRight && 'border-r',
-                // Bottom borders — heavy at box boundaries
-                !isLastRow && isBoxBottom && 'border-b-[3px]',
-                !isLastRow && !isBoxBottom && 'border-b',
-              )}
               style={{
-                borderColor: 'var(--color-grid-lines)',
+                borderRight: !isLastCol
+                  ? isBoxRight
+                    ? '2px solid var(--border-strong)'
+                    : '1px solid var(--border-subtle)'
+                  : undefined,
+                borderBottom: !isLastRow
+                  ? isBoxBottom
+                    ? '2px solid var(--border-strong)'
+                    : '1px solid var(--border-subtle)'
+                  : undefined,
               }}
               role="gridcell"
               aria-rowindex={r + 1}
               aria-colindex={c + 1}
-              data-box={boxIdx}
+              data-box={getBoxIndex(r, c)}
             >
               <Cell
                 cell={cell}
@@ -190,6 +191,9 @@ export function SudokuGrid({
                 isMatchingValue={isMatchingValue}
                 isError={isError}
                 isFogged={isFogged}
+                isCorrectFlash={isCorrectFlash}
+                isErrorShake={isErrorShake}
+                isLockedByOpponent={isLockedByOpponent}
                 onClick={handleCellClick}
               />
             </div>

@@ -205,6 +205,16 @@ export async function getUserFromRequest(
       isGuest: users.isGuest,
       xp: users.xp,
       rank: users.rank,
+      rankTier: users.rankTier,
+      totalXp: users.totalXp,
+      gamesPlayed: users.gamesPlayed,
+      wins: users.wins,
+      losses: users.losses,
+      avatarUrl: users.avatarUrl,
+      bio: users.bio,
+      coins: users.coins,
+      trophies: users.trophies,
+      level: users.level,
       createdAt: users.createdAt,
     })
     .from(sessions)

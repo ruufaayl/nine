@@ -87,7 +87,7 @@ export default function FriendsList() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #091a1f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -101,7 +101,7 @@ export default function FriendsList() {
           <div>
             <h1
               className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               Social Hub
             </h1>
@@ -116,10 +116,10 @@ export default function FriendsList() {
             style={{
               color: SOCIAL,
               border: `2px solid ${SOCIAL}`,
-              boxShadow: `3px 3px 0px ${SOCIAL}`,
-              fontFamily: 'var(--font-display)',
+              boxShadow: 'var(--shadow-md)',
+              fontFamily: 'var(--font-primary)',
             }}
-            whileHover={{ boxShadow: `5px 5px 0px ${SOCIAL}`, y: -2 }}
+            whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
             whileTap={{ scale: 0.97 }}
           >
             Find Players
@@ -142,9 +142,9 @@ export default function FriendsList() {
               onClick={() => setTab(t.key)}
               className="text-[0.55rem] font-bold uppercase tracking-[0.15em] px-4 py-2 cursor-pointer transition-all duration-150"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 background: tab === t.key ? SOCIAL : 'transparent',
-                color: tab === t.key ? '#0a0a0f' : 'rgba(255,255,255,0.3)',
+                color: tab === t.key ? 'var(--bg-primary)' : 'rgba(255,255,255,0.3)',
                 border: `1px solid ${tab === t.key ? SOCIAL : 'rgba(255,255,255,0.08)'}`,
               }}
             >
@@ -183,8 +183,8 @@ export default function FriendsList() {
                       style={{
                         color: SOCIAL,
                         border: `2px solid ${SOCIAL}`,
-                        boxShadow: `3px 3px 0px ${SOCIAL}`,
-                        fontFamily: 'var(--font-display)',
+                        boxShadow: 'var(--shadow-md)',
+                        fontFamily: 'var(--font-primary)',
                       }}
                       whileTap={{ scale: 0.97 }}
                     >
@@ -199,7 +199,7 @@ export default function FriendsList() {
                       key={friend.id}
                       className="flex items-center gap-4 px-5 py-4 group"
                       style={{
-                        background: '#0c0c14',
+                        background: 'var(--bg-surface)',
                         border: '1px solid rgba(255,255,255,0.04)',
                       }}
                       initial={{ opacity: 0, x: -8 }}
@@ -218,7 +218,7 @@ export default function FriendsList() {
                         </div>
                         <div
                           className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
-                          style={{ background: cfg.color, border: '2px solid #0c0c14' }}
+                          style={{ background: cfg.color, border: '2px solid var(--bg-surface)' }}
                         />
                       </div>
 
@@ -226,7 +226,7 @@ export default function FriendsList() {
                         <button
                           onClick={() => navigate(`/social/player/${friend.id}`)}
                           className="text-sm font-bold uppercase tracking-[0.08em] truncate block cursor-pointer hover:text-white transition-colors"
-                          style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.7)' }}
+                          style={{ fontFamily: 'var(--font-primary)', color: 'rgba(255,255,255,0.7)' }}
                         >
                           {friend.username}
                         </button>
@@ -250,12 +250,12 @@ export default function FriendsList() {
                           onClick={() => navigate(`/social/challenge/${friend.id}`)}
                           className="text-[0.5rem] font-bold uppercase tracking-[0.15em] px-3 py-1.5 cursor-pointer shrink-0"
                           style={{
-                            fontFamily: 'var(--font-display)',
+                            fontFamily: 'var(--font-primary)',
                             color: SOCIAL,
                             border: `1px solid ${SOCIAL}40`,
                             background: `${SOCIAL}08`,
                           }}
-                          whileHover={{ background: `${SOCIAL}20`, boxShadow: `3px 3px 0px ${SOCIAL}` }}
+                          whileHover={{ background: `${SOCIAL}20`, boxShadow: 'var(--shadow-md)' }}
                           whileTap={{ scale: 0.96 }}
                         >
                           Challenge
@@ -284,7 +284,7 @@ export default function FriendsList() {
                     key={req.id}
                     className="flex items-center gap-4 px-5 py-4"
                     style={{
-                      background: '#0c0c14',
+                      background: 'var(--bg-surface)',
                       border: `1px solid ${req.direction === 'incoming' ? `${SOCIAL}20` : 'rgba(255,255,255,0.04)'}`,
                     }}
                     initial={{ opacity: 0, x: -8 }}
@@ -301,7 +301,7 @@ export default function FriendsList() {
                     <div className="flex-1 min-w-0">
                       <span
                         className="text-sm font-bold uppercase tracking-[0.08em] block"
-                        style={{ fontFamily: 'var(--font-display)' }}
+                        style={{ fontFamily: 'var(--font-primary)' }}
                       >
                         {req.username}
                       </span>
@@ -321,7 +321,7 @@ export default function FriendsList() {
                       <div className="flex gap-2 shrink-0">
                         <motion.button
                           className="text-[0.5rem] font-bold uppercase px-2.5 py-1 cursor-pointer"
-                          style={{ background: SOCIAL, color: '#0a0a0f' }}
+                          style={{ background: SOCIAL, color: 'var(--bg-primary)' }}
                           whileTap={{ scale: 0.96 }}
                           onClick={() => handleAction('accept', req.id)}
                         >

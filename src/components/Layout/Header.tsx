@@ -43,9 +43,10 @@ export function Header({ user }: HeaderProps) {
         'fixed top-0 left-0 right-0 z-50',
         'flex items-center justify-between',
         'h-12 px-5',
-        'border-b border-white/[0.06]',
-        'bg-[#0a0a0f]/80 backdrop-blur-md',
+        'border-b',
+        'bg-[var(--bg-primary)]/80 backdrop-blur-md',
       )}
+      style={{ borderColor: 'var(--border-subtle)' }}
       initial={{ y: -48, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -58,7 +59,7 @@ export function Header({ user }: HeaderProps) {
         <span className="text-base font-black tracking-tighter text-white group-hover:text-white/80 transition-colors">
           NINE
         </span>
-        <span className="text-[0.45rem] uppercase tracking-[0.3em] text-white/15 hidden sm:inline">
+        <span className="text-[0.45rem] uppercase tracking-[0.3em] hidden sm:inline" style={{ color: 'var(--text-muted)' }}>
           Protocol
         </span>
       </button>
@@ -68,7 +69,8 @@ export function Header({ user }: HeaderProps) {
         {/* Leaderboard link */}
         <button
           onClick={() => navigate('/leaderboard')}
-          className="text-[0.55rem] uppercase tracking-[0.2em] text-white/20 hover:text-white/50 transition-colors"
+          className="text-[0.55rem] uppercase tracking-[0.2em] transition-colors"
+          style={{ color: 'var(--text-tertiary)' }}
         >
           Leaderboard
         </button>

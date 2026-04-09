@@ -58,7 +58,7 @@ export default function PrivateRoom() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #091a1f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -82,7 +82,7 @@ export default function PrivateRoom() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Private Room
           </h1>
@@ -100,7 +100,7 @@ export default function PrivateRoom() {
         >
           <h2
             className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: `${SOCIAL}99` }}
+            style={{ fontFamily: 'var(--font-primary)', color: `${SOCIAL}99` }}
           >
             Game Mode
           </h2>
@@ -117,9 +117,9 @@ export default function PrivateRoom() {
                   onClick={() => { setSelectedMode(m.id); setRoomCode(null); }}
                   className="px-3 py-2.5 text-left cursor-pointer"
                   style={{
-                    background: '#0c0c14',
+                    background: 'var(--bg-surface)',
                     border: `2px solid ${active ? mAccent : 'rgba(255,255,255,0.06)'}`,
-                    boxShadow: active ? `3px 3px 0px ${mAccent}` : 'none',
+                    boxShadow: active ? 'var(--shadow-md)' : 'none',
                     transition: 'border-color 0.15s, box-shadow 0.15s',
                   }}
                   whileTap={{ scale: 0.98 }}
@@ -127,7 +127,7 @@ export default function PrivateRoom() {
                   <span
                     className="text-[0.5rem] font-bold uppercase tracking-[0.1em]"
                     style={{
-                      fontFamily: 'var(--font-display)',
+                      fontFamily: 'var(--font-primary)',
                       color: active ? mAccent : 'rgba(255,255,255,0.35)',
                     }}
                   >
@@ -153,12 +153,12 @@ export default function PrivateRoom() {
                 onClick={generateCode}
                 className="w-full py-4 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   background: accent,
-                  color: '#0a0a0f',
-                  boxShadow: '4px 4px 0px #fff',
+                  color: 'var(--bg-primary)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
-                whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+                whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
                 Create Room
@@ -177,9 +177,9 @@ export default function PrivateRoom() {
               <div
                 className="w-full px-6 py-5 text-center"
                 style={{
-                  background: '#0c0c14',
+                  background: 'var(--bg-surface)',
                   border: `2px solid ${accent}`,
-                  boxShadow: `6px 6px 0px ${accent}`,
+                  boxShadow: 'var(--shadow-lg)',
                 }}
               >
                 <p className="text-[0.45rem] uppercase tracking-[0.3em] text-white/20 mb-2">
@@ -187,7 +187,7 @@ export default function PrivateRoom() {
                 </p>
                 <motion.p
                   className="text-4xl font-black tracking-[0.4em]"
-                  style={{ fontFamily: 'var(--font-display)', color: accent }}
+                  style={{ fontFamily: 'var(--font-primary)', color: accent }}
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 400 }}
@@ -204,11 +204,11 @@ export default function PrivateRoom() {
                 onClick={copyCode}
                 className="w-full py-3 text-[0.6rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-display)',
-                  color: copied ? '#0a0a0f' : accent,
+                  fontFamily: 'var(--font-primary)',
+                  color: copied ? 'var(--bg-primary)' : accent,
                   background: copied ? accent : 'transparent',
                   border: `2px solid ${accent}`,
-                  boxShadow: copied ? `3px 3px 0px #fff` : `3px 3px 0px ${accent}40`,
+                  boxShadow: copied ? 'var(--shadow-md)' : 'var(--shadow-sm)',
                   transition: 'all 0.2s',
                 }}
                 whileTap={{ scale: 0.97 }}
@@ -221,12 +221,12 @@ export default function PrivateRoom() {
                 onClick={enterLobby}
                 className="w-full py-4 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   background: accent,
-                  color: '#0a0a0f',
-                  boxShadow: '4px 4px 0px #fff',
+                  color: 'var(--bg-primary)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
-                whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+                whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
                 Enter Lobby

@@ -173,7 +173,7 @@ function CosmicBackground() {
       <div
         className="absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse at 50% 20%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -181,7 +181,7 @@ function CosmicBackground() {
       <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
         <defs>
           <pattern id="vault-grid" width="50" height="50" patternUnits="userSpaceOnUse">
-            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="0.5" />
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(var(--fg),0.035)" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#vault-grid)" />
@@ -195,7 +195,7 @@ function CosmicBackground() {
           left: '10%',
           width: 400,
           height: 400,
-          border: '1px solid rgba(0,255,255,0.025)',
+          border: '1px solid rgba(var(--fg),0.025)',
           animation: 'slow-spin 120s linear infinite',
         }}
       />
@@ -206,7 +206,7 @@ function CosmicBackground() {
           right: '5%',
           width: 300,
           height: 300,
-          border: '1px solid rgba(255,0,255,0.02)',
+          border: '1px solid rgba(var(--fg),0.02)',
           borderRadius: '50%',
           animation: 'reverse-spin 90s linear infinite',
         }}
@@ -218,7 +218,7 @@ function CosmicBackground() {
           left: '30%',
           width: 200,
           height: 200,
-          border: '1px solid rgba(170,255,0,0.02)',
+          border: '1px solid rgba(var(--fg),0.02)',
           transform: 'rotate(45deg)',
           animation: 'slow-spin 150s linear infinite',
         }}
@@ -309,7 +309,7 @@ function OuterRing({ activeCategory, onSelect, phase }: OuterRingProps) {
                 strokeLinecap="round"
                 initial={false}
                 animate={{
-                  stroke: isActive ? accent : isDimmed ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)',
+                  stroke: isActive ? accent : isDimmed ? 'rgba(var(--fg),0.06)' : 'rgba(var(--fg),0.12)',
                   strokeWidth: isActive ? 6 : 3,
                   filter: isActive ? `url(#glow-outer-${cat.replace(/\s/g, '')})` : 'none',
                   opacity: isDimmed ? 0.3 : 1,
@@ -351,15 +351,15 @@ function OuterRing({ activeCategory, onSelect, phase }: OuterRingProps) {
           >
             <span
               className="text-lg"
-              style={{ color: isActive ? accent : 'rgba(255,255,255,0.35)' }}
+              style={{ color: isActive ? accent : 'rgba(var(--fg),0.35)' }}
             >
               {CATEGORY_GLYPHS[cat]}
             </span>
             <span
               className="text-[0.55rem] font-bold tracking-[0.15em] uppercase whitespace-nowrap"
               style={{
-                fontFamily: 'var(--font-display)',
-                color: isActive ? accent : 'rgba(255,255,255,0.4)',
+                fontFamily: 'var(--font-primary)',
+                color: isActive ? accent : 'rgba(var(--fg),0.4)',
                 textShadow: isActive ? `0 0 12px ${accent}40` : 'none',
               }}
             >
@@ -499,7 +499,7 @@ function MiddleRing({ modes, activeMode, activeCategory, onSelect, phase }: Midd
               <span
                 className="text-[0.6rem] font-semibold tracking-wide uppercase whitespace-nowrap"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   color: isActive ? accent : `${accent}99`,
                   textShadow: isActive ? `0 0 10px ${accent}50` : 'none',
                 }}
@@ -508,7 +508,7 @@ function MiddleRing({ modes, activeMode, activeCategory, onSelect, phase }: Midd
               </span>
               <span
                 className="text-[0.45rem] tracking-wider whitespace-nowrap"
-                style={{ color: isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)' }}
+                style={{ color: isActive ? 'rgba(var(--fg),0.6)' : 'rgba(var(--fg),0.25)' }}
               >
                 {mode.description}
               </span>
@@ -562,7 +562,7 @@ function CoreLock({ phase, activeCategory, activeMode, onReset }: CoreLockProps)
           >
             <span
               className="text-[0.55rem] font-bold tracking-[0.2em] uppercase"
-              style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.25)' }}
+              style={{ fontFamily: 'var(--font-primary)', color: 'rgba(var(--fg),0.25)' }}
             >
               LOCKED
             </span>
@@ -582,7 +582,7 @@ function CoreLock({ phase, activeCategory, activeMode, onReset }: CoreLockProps)
             </span>
             <span
               className="text-[0.45rem] font-semibold tracking-[0.15em] uppercase"
-              style={{ fontFamily: 'var(--font-display)', color: `${accent}aa` }}
+              style={{ fontFamily: 'var(--font-primary)', color: `${accent}aa` }}
             >
               SELECT MODE
             </span>
@@ -599,7 +599,7 @@ function CoreLock({ phase, activeCategory, activeMode, onReset }: CoreLockProps)
           >
             <motion.span
               className="text-[0.65rem] font-black tracking-[0.2em] uppercase"
-              style={{ fontFamily: 'var(--font-display)', color: accent }}
+              style={{ fontFamily: 'var(--font-primary)', color: accent }}
               animate={{ opacity: [1, 0.6, 1] }}
               transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
             >
@@ -607,7 +607,7 @@ function CoreLock({ phase, activeCategory, activeMode, onReset }: CoreLockProps)
             </motion.span>
             <span
               className="text-[0.4rem] tracking-wider uppercase"
-              style={{ color: 'rgba(255,255,255,0.4)' }}
+              style={{ color: 'rgba(var(--fg),0.4)' }}
             >
               {activeMode.name}
             </span>
@@ -651,9 +651,9 @@ function DifficultyCards({ visible, activeMode, onLaunch }: DifficultyCardsProps
                 height: 170,
                 left: -70,
                 top: -85,
-                background: '#0c0c14',
-                border: `3px solid ${diff.accent}`,
-                boxShadow: `6px 6px 0px ${diff.accent}`,
+                background: 'var(--bg-surface)',
+                border: `2px solid ${diff.accent}`,
+                boxShadow: 'var(--shadow-lg)',
               }}
               custom={i}
               variants={cardFlyVariants}
@@ -666,7 +666,7 @@ function DifficultyCards({ visible, activeMode, onLaunch }: DifficultyCardsProps
               exit="exit"
               whileHover={{
                 y: cardPositions[i].y - 12,
-                boxShadow: `8px 10px 0px ${diff.accent}, 0 0 30px ${diff.accent}40`,
+                boxShadow: 'var(--shadow-xl)',
                 transition: { type: 'spring', stiffness: 400, damping: 20 },
               }}
               whileTap={{
@@ -686,7 +686,7 @@ function DifficultyCards({ visible, activeMode, onLaunch }: DifficultyCardsProps
               <span
                 className="text-[0.7rem] font-black tracking-[0.2em]"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   color: diff.accent,
                 }}
               >
@@ -694,7 +694,7 @@ function DifficultyCards({ visible, activeMode, onLaunch }: DifficultyCardsProps
               </span>
               <span
                 className="text-[0.5rem] tracking-[0.15em] uppercase"
-                style={{ color: 'rgba(255,255,255,0.35)' }}
+                style={{ color: 'rgba(var(--fg),0.35)' }}
               >
                 {diff.sublabel}
               </span>
@@ -723,7 +723,7 @@ function StateBreadcrumb({ phase, activeCategory, activeMode }: BreadcrumbProps)
           <motion.p
             key="idle"
             className="text-[0.6rem] uppercase tracking-[0.3em]"
-            style={{ color: 'rgba(255,255,255,0.2)', fontFamily: 'var(--font-display)' }}
+            style={{ color: 'rgba(var(--fg),0.2)', fontFamily: 'var(--font-primary)' }}
             variants={breadcrumbVariants}
             initial="hidden"
             animate="visible"
@@ -736,33 +736,33 @@ function StateBreadcrumb({ phase, activeCategory, activeMode }: BreadcrumbProps)
           <motion.p
             key={`cat-${activeCategory}`}
             className="text-[0.6rem] uppercase tracking-[0.2em] flex items-center gap-2"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
             variants={breadcrumbVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             <span style={{ color: accent }}>{activeCategory}</span>
-            <span style={{ color: 'rgba(255,255,255,0.15)' }}>{'>'}</span>
-            <span style={{ color: 'rgba(255,255,255,0.25)' }}>???</span>
+            <span style={{ color: 'rgba(var(--fg),0.15)' }}>{'>'}</span>
+            <span style={{ color: 'rgba(var(--fg),0.25)' }}>???</span>
           </motion.p>
         )}
         {phase === 'mode-selected' && activeCategory && activeMode && (
           <motion.p
             key={`mode-${activeMode.id}`}
             className="text-[0.6rem] uppercase tracking-[0.2em] flex items-center gap-2"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
             variants={breadcrumbVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             <span style={{ color: accent }}>{activeCategory}</span>
-            <span style={{ color: 'rgba(255,255,255,0.15)' }}>{'>'}</span>
+            <span style={{ color: 'rgba(var(--fg),0.15)' }}>{'>'}</span>
             <span style={{ color: accent }}>{activeMode.name}</span>
-            <span style={{ color: 'rgba(255,255,255,0.15)' }}>{'>'}</span>
+            <span style={{ color: 'rgba(var(--fg),0.15)' }}>{'>'}</span>
             <span
-              style={{ color: 'rgba(255,255,255,0.4)' }}
+              style={{ color: 'rgba(var(--fg),0.4)' }}
               className="animate-pulse"
             >
               SELECT DIFFICULTY
@@ -863,7 +863,7 @@ export default function Home() {
         >
           <motion.h1
             className="text-5xl sm:text-7xl font-black leading-none tracking-tighter"
-            style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+            style={{ fontFamily: 'var(--font-primary)', color: 'var(--text-primary)' }}
             animate={{ opacity: [0.85, 1, 0.85] }}
             transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
           >
@@ -871,7 +871,7 @@ export default function Home() {
           </motion.h1>
           <p
             className="text-[0.55rem] uppercase tracking-[0.4em] mt-2"
-            style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-display)' }}
+            style={{ color: 'rgba(var(--fg),0.25)', fontFamily: 'var(--font-primary)' }}
           >
             Select Your Protocol
           </p>
@@ -904,7 +904,7 @@ export default function Home() {
                 cy={CY}
                 r={OUTER_R}
                 fill="none"
-                stroke="rgba(255,255,255,0.03)"
+                stroke="rgba(var(--fg),0.03)"
                 strokeWidth="1"
                 strokeDasharray="4 8"
               />
@@ -919,7 +919,7 @@ export default function Home() {
                 animate={{
                   stroke: activeCategory
                     ? `${CATEGORY_ACCENTS[activeCategory]}15`
-                    : 'rgba(255,255,255,0.02)',
+                    : 'rgba(var(--fg),0.02)',
                 }}
                 transition={{ duration: 0.4 }}
               />
@@ -929,7 +929,7 @@ export default function Home() {
                 cy={CY}
                 r={CORE_R + 8}
                 fill="none"
-                stroke="rgba(255,255,255,0.02)"
+                stroke="rgba(var(--fg),0.02)"
                 strokeWidth="0.5"
               />
             </svg>
@@ -977,7 +977,7 @@ export default function Home() {
           <div className="w-8 h-px bg-white/10" />
           <p
             className="text-[0.5rem] uppercase tracking-[0.3em]"
-            style={{ color: 'rgba(255,255,255,0.12)', fontFamily: 'var(--font-display)' }}
+            style={{ color: 'rgba(var(--fg),0.12)', fontFamily: 'var(--font-primary)' }}
           >
             14 Modes · Zero Compromise
           </p>

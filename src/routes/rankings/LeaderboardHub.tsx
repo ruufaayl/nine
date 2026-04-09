@@ -72,7 +72,7 @@ export default function LeaderboardHub() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #1a160a 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -85,7 +85,7 @@ export default function LeaderboardHub() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)', color: RANK_GOLD }}
+            style={{ fontFamily: 'var(--font-primary)', color: RANK_GOLD }}
           >
             Leaderboard
           </h1>
@@ -111,9 +111,9 @@ export default function LeaderboardHub() {
               onClick={() => t.key === 'mode' ? navigate('/rankings/mode/prime-grid') : setTab(t.key)}
               className="text-[0.55rem] font-bold uppercase tracking-[0.15em] px-4 py-2 cursor-pointer transition-all duration-150"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 background: tab === t.key && t.key !== 'mode' ? RANK_GOLD : 'transparent',
-                color: tab === t.key && t.key !== 'mode' ? '#0a0a0f' : 'rgba(255,255,255,0.3)',
+                color: tab === t.key && t.key !== 'mode' ? 'var(--bg-primary)' : 'rgba(255,255,255,0.3)',
                 border: `1px solid ${tab === t.key && t.key !== 'mode' ? RANK_GOLD : 'rgba(255,255,255,0.08)'}`,
               }}
             >
@@ -125,7 +125,7 @@ export default function LeaderboardHub() {
             onClick={() => navigate('/rankings/season')}
             className="text-[0.55rem] font-bold uppercase tracking-[0.15em] px-4 py-2 cursor-pointer ml-auto"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: `${RANK_GOLD}88`,
               border: `1px solid ${RANK_GOLD}30`,
             }}
@@ -184,13 +184,13 @@ export default function LeaderboardHub() {
                     className="grid items-center gap-3 px-5 py-3 text-left cursor-pointer w-full"
                     style={{
                       gridTemplateColumns: '2rem 1fr 4rem 4rem',
-                      background: entry.isSelf ? `${RANK_GOLD}08` : '#0c0c14',
+                      background: entry.isSelf ? `${RANK_GOLD}08` : 'var(--bg-surface)',
                       border: entry.isSelf
                         ? `2px solid ${RANK_GOLD}`
                         : isPodium
                           ? `1px solid ${podiumColor}30`
                           : '1px solid rgba(255,255,255,0.03)',
-                      boxShadow: entry.isSelf ? `4px 4px 0px ${RANK_GOLD}` : 'none',
+                      boxShadow: entry.isSelf ? 'var(--shadow-md)' : 'none',
                     }}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -200,7 +200,7 @@ export default function LeaderboardHub() {
                     <span
                       className="text-sm font-black tabular-nums"
                       style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-primary)',
                         color: podiumColor ?? (entry.isSelf ? RANK_GOLD : 'rgba(255,255,255,0.2)'),
                       }}
                     >
@@ -212,7 +212,7 @@ export default function LeaderboardHub() {
                         <span
                           className="text-xs font-bold uppercase tracking-[0.08em] truncate"
                           style={{
-                            fontFamily: 'var(--font-display)',
+                            fontFamily: 'var(--font-primary)',
                             color: entry.isSelf ? RANK_GOLD : 'rgba(255,255,255,0.7)',
                           }}
                         >
@@ -233,7 +233,7 @@ export default function LeaderboardHub() {
                     <span
                       className="text-[0.6rem] font-bold tabular-nums text-right"
                       style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-primary)',
                         color: podiumColor ?? (entry.isSelf ? RANK_GOLD : 'rgba(255,255,255,0.4)'),
                       }}
                     >

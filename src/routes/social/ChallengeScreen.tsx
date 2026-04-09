@@ -15,9 +15,9 @@ const SOCIAL = '#3eb8cf';
 // ─── Difficulties ───────────────────────────
 
 const DIFFICULTIES = [
-  { id: 'trainee', label: 'Trainee', accent: 'var(--electric-lime)' },
+  { id: 'trainee', label: 'Trainee', accent: 'var(--accent-success)' },
   { id: 'operative', label: 'Operative', accent: SOCIAL },
-  { id: 'mastermind', label: 'Mastermind', accent: 'var(--neon-magenta)' },
+  { id: 'mastermind', label: 'Mastermind', accent: 'var(--accent-primary)' },
 ] as const;
 
 const WAGER_OPTIONS = [0, 50, 100, 250, 500] as const;
@@ -62,7 +62,7 @@ export default function ChallengeScreen() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #091a1f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -86,7 +86,7 @@ export default function ChallengeScreen() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-2"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Challenge
           </h1>
@@ -107,7 +107,7 @@ export default function ChallengeScreen() {
               <div>
                 <h2
                   className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-                  style={{ fontFamily: 'var(--font-display)', color: `${SOCIAL}99` }}
+                  style={{ fontFamily: 'var(--font-primary)', color: `${SOCIAL}99` }}
                 >
                   1. Select Mode
                 </h2>
@@ -124,9 +124,9 @@ export default function ChallengeScreen() {
                         onClick={() => setSelectedMode(m.id)}
                         className="px-3 py-3 text-left cursor-pointer"
                         style={{
-                          background: '#0c0c14',
+                          background: 'var(--bg-surface)',
                           border: `2px solid ${active ? accent : 'rgba(255,255,255,0.06)'}`,
-                          boxShadow: active ? `3px 3px 0px ${accent}` : 'none',
+                          boxShadow: active ? 'var(--shadow-md)' : 'none',
                           transition: 'border-color 0.15s, box-shadow 0.15s',
                         }}
                         whileHover={{ borderColor: `${accent}60` }}
@@ -135,7 +135,7 @@ export default function ChallengeScreen() {
                         <span
                           className="text-[0.55rem] font-bold uppercase tracking-[0.1em] block"
                           style={{
-                            fontFamily: 'var(--font-display)',
+                            fontFamily: 'var(--font-primary)',
                             color: active ? accent : 'rgba(255,255,255,0.4)',
                           }}
                         >
@@ -152,7 +152,7 @@ export default function ChallengeScreen() {
               <div>
                 <h2
                   className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-                  style={{ fontFamily: 'var(--font-display)', color: `${SOCIAL}99` }}
+                  style={{ fontFamily: 'var(--font-primary)', color: `${SOCIAL}99` }}
                 >
                   2. Difficulty
                 </h2>
@@ -165,11 +165,11 @@ export default function ChallengeScreen() {
                         onClick={() => setDifficulty(d.id)}
                         className="flex-1 py-3 text-[0.55rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
                         style={{
-                          fontFamily: 'var(--font-display)',
-                          background: active ? d.accent : '#0c0c14',
-                          color: active ? '#0a0a0f' : 'rgba(255,255,255,0.3)',
+                          fontFamily: 'var(--font-primary)',
+                          background: active ? d.accent : 'var(--bg-surface)',
+                          color: active ? 'var(--bg-primary)' : 'rgba(255,255,255,0.3)',
                           border: `2px solid ${active ? d.accent : 'rgba(255,255,255,0.06)'}`,
-                          boxShadow: active ? `3px 3px 0px #fff` : 'none',
+                          boxShadow: active ? 'var(--shadow-md)' : 'none',
                         }}
                         whileTap={{ scale: 0.97 }}
                       >
@@ -184,7 +184,7 @@ export default function ChallengeScreen() {
               <div>
                 <h2
                   className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-                  style={{ fontFamily: 'var(--font-display)', color: `${SOCIAL}99` }}
+                  style={{ fontFamily: 'var(--font-primary)', color: `${SOCIAL}99` }}
                 >
                   3. Wager <span className="text-white/20">(Optional)</span>
                 </h2>
@@ -197,11 +197,11 @@ export default function ChallengeScreen() {
                         onClick={() => setWager(w)}
                         className="flex-1 py-2.5 text-[0.55rem] font-bold tabular-nums cursor-pointer"
                         style={{
-                          fontFamily: 'var(--font-display)',
-                          background: active ? '#0c0c14' : 'transparent',
-                          color: active ? 'var(--laser-orange)' : 'rgba(255,255,255,0.2)',
-                          border: `1px solid ${active ? 'var(--laser-orange)' : 'rgba(255,255,255,0.06)'}`,
-                          boxShadow: active ? '2px 2px 0px var(--laser-orange)' : 'none',
+                          fontFamily: 'var(--font-primary)',
+                          background: active ? 'var(--bg-surface)' : 'transparent',
+                          color: active ? 'var(--accent-warning)' : 'rgba(255,255,255,0.2)',
+                          border: `1px solid ${active ? 'var(--accent-warning)' : 'rgba(255,255,255,0.06)'}`,
+                          boxShadow: active ? 'var(--shadow-sm)' : 'none',
                         }}
                         whileTap={{ scale: 0.97 }}
                       >
@@ -218,12 +218,12 @@ export default function ChallengeScreen() {
                 disabled={!selectedMode}
                 className="w-full py-4 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   background: selectedMode ? modeAccent : 'rgba(255,255,255,0.1)',
-                  color: selectedMode ? '#0a0a0f' : 'rgba(255,255,255,0.2)',
-                  boxShadow: selectedMode ? '4px 4px 0px #fff' : 'none',
+                  color: selectedMode ? 'var(--bg-primary)' : 'rgba(255,255,255,0.2)',
+                  boxShadow: selectedMode ? 'var(--shadow-md)' : 'none',
                 }}
-                whileHover={selectedMode ? { boxShadow: '6px 6px 0px #fff', y: -2 } : {}}
+                whileHover={selectedMode ? { boxShadow: 'var(--shadow-lg)', y: -2 } : {}}
                 whileTap={selectedMode ? { scale: 0.97 } : {}}
               >
                 Send Challenge
@@ -246,7 +246,7 @@ export default function ChallengeScreen() {
               </motion.span>
               <h2
                 className="text-xl font-black uppercase tracking-[0.15em]"
-                style={{ fontFamily: 'var(--font-display)', color: SOCIAL }}
+                style={{ fontFamily: 'var(--font-primary)', color: SOCIAL }}
               >
                 Challenge Sent!
               </h2>

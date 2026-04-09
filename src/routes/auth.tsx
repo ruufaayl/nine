@@ -183,7 +183,7 @@ export function ErrorBoundary() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        background: '#0a0a0f',
+        background: 'var(--bg-primary)',
         color: '#fff',
         padding: '1.5rem',
       }}

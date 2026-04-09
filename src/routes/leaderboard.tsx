@@ -152,7 +152,7 @@ export default function LeaderboardRoute() {
   const { players, totalCount } = useLoaderData<LeaderboardData>();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-white overflow-x-hidden">
       {/* Background grid */}
       <svg className="fixed inset-0 w-full h-full pointer-events-none z-0" aria-hidden="true">
         <defs>
@@ -193,7 +193,7 @@ export default function LeaderboardRoute() {
             </span>
             <span
               className="text-xl font-black tabular-nums tracking-tight"
-              style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               {totalCount.toLocaleString()}
             </span>
@@ -211,7 +211,7 @@ export default function LeaderboardRoute() {
             <span className="text-2xl opacity-20">◈</span>
             <span
               className="text-[0.65rem] uppercase tracking-[0.3em] text-white/20"
-              style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               No Registered Sectors Found
             </span>
@@ -293,14 +293,14 @@ export default function LeaderboardRoute() {
                         'w-20 text-right text-sm font-bold tabular-nums',
                         isTop3 ? 'text-white/80' : 'text-white/40',
                       )}
-                      style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+                      style={{ fontFamily: 'var(--font-primary)' }}
                     >
                       {player.xp.toLocaleString()}
                     </span>
 
                     <span
                       className="w-14 text-right text-xs tabular-nums text-white/25"
-                      style={{ fontFamily: '"JetBrains Mono", "SF Mono", "Fira Code", monospace' }}
+                      style={{ fontFamily: 'var(--font-primary)' }}
                     >
                       {player.gamesPlayed}
                     </span>

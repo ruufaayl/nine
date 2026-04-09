@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Accents ─────────────────────────────────
 
-const LIME = 'var(--electric-lime)';
+const LIME = 'var(--accent-success)';
 const LIME_HEX = '#aaff00';
 
 // ─── Mock Data ───────────────────────────────
@@ -62,7 +62,7 @@ export default function DailyChallenge() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #0f1a08 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -89,7 +89,7 @@ export default function DailyChallenge() {
           </p>
           <h1
             className="text-3xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)', color: LIME_HEX }}
+            style={{ fontFamily: 'var(--font-primary)', color: LIME_HEX }}
           >
             {TODAY.number}
           </h1>
@@ -102,9 +102,9 @@ export default function DailyChallenge() {
         <motion.div
           className="relative overflow-hidden mb-6"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: `2px solid ${LIME_HEX}`,
-            boxShadow: `6px 6px 0px ${LIME_HEX}`,
+            boxShadow: 'var(--shadow-lg)',
           }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,7 +118,7 @@ export default function DailyChallenge() {
             <div className="flex flex-col items-center">
               <motion.span
                 className="text-4xl font-black tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: LIME_HEX }}
+                style={{ fontFamily: 'var(--font-primary)', color: LIME_HEX }}
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
@@ -153,7 +153,7 @@ export default function DailyChallenge() {
             <div className="flex flex-col items-center">
               <span
                 className="text-lg font-black tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.25)' }}
+                style={{ fontFamily: 'var(--font-primary)', color: 'rgba(255,255,255,0.25)' }}
               >
                 {STREAK.best}
               </span>
@@ -168,7 +168,7 @@ export default function DailyChallenge() {
         <motion.div
           className="mb-6 px-5 py-4"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: '1px solid rgba(255,255,255,0.06)',
           }}
           initial={{ opacity: 0, y: 8 }}
@@ -185,7 +185,7 @@ export default function DailyChallenge() {
               </span>
               <span
                 className="text-sm font-bold tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: LIME_HEX }}
+                style={{ fontFamily: 'var(--font-primary)', color: LIME_HEX }}
               >
                 {TODAY.timeLimit}
               </span>
@@ -196,7 +196,7 @@ export default function DailyChallenge() {
               </span>
               <span
                 className="text-sm font-bold tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: '#c9a84c' }}
+                style={{ fontFamily: 'var(--font-primary)', color: '#c9a84c' }}
               >
                 {TODAY.bestToday}
               </span>
@@ -207,7 +207,7 @@ export default function DailyChallenge() {
               </span>
               <span
                 className="text-sm font-bold tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.4)' }}
+                style={{ fontFamily: 'var(--font-primary)', color: 'rgba(255,255,255,0.4)' }}
               >
                 {TODAY.participants}
               </span>
@@ -223,16 +223,16 @@ export default function DailyChallenge() {
               onClick={handleStart}
               className="w-full py-4 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer mb-8"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 background: LIME_HEX,
-                color: '#0a0a0f',
-                boxShadow: '4px 4px 0px #fff',
+                color: 'var(--bg-primary)',
+                boxShadow: 'var(--shadow-md)',
               }}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: 0.3 }}
-              whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+              whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
               whileTap={{ scale: 0.97 }}
             >
               Start Today's Challenge
@@ -242,10 +242,10 @@ export default function DailyChallenge() {
               key="launching"
               className="w-full py-4 text-center text-sm font-bold uppercase tracking-[0.15em] mb-8"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 color: LIME_HEX,
                 border: `2px solid ${LIME_HEX}`,
-                boxShadow: `4px 4px 0px ${LIME_HEX}`,
+                boxShadow: 'var(--shadow-md)',
               }}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -265,7 +265,7 @@ export default function DailyChallenge() {
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#c9a84c' }} />
             <h2
               className="text-[0.55rem] font-bold uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-display)', color: '#c9a84c99' }}
+              style={{ fontFamily: 'var(--font-primary)', color: '#c9a84c99' }}
             >
               Today's Leaderboard
             </h2>
@@ -291,11 +291,11 @@ export default function DailyChallenge() {
                   className="grid items-center gap-2 px-5 py-3"
                   style={{
                     gridTemplateColumns: '1.5rem 1fr 3.5rem 3.5rem',
-                    background: entry.isSelf ? `${LIME_HEX}08` : '#0c0c14',
+                    background: entry.isSelf ? `${LIME_HEX}08` : 'var(--bg-surface)',
                     border: entry.isSelf
                       ? `2px solid ${LIME_HEX}`
                       : `1px solid ${podiumColor ? `${podiumColor}20` : 'rgba(255,255,255,0.03)'}`,
-                    boxShadow: entry.isSelf ? `4px 4px 0px ${LIME_HEX}` : 'none',
+                    boxShadow: entry.isSelf ? 'var(--shadow-md)' : 'none',
                   }}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -303,7 +303,7 @@ export default function DailyChallenge() {
                 >
                   <span
                     className="text-xs font-black tabular-nums"
-                    style={{ fontFamily: 'var(--font-display)', color: podiumColor ?? 'rgba(255,255,255,0.2)' }}
+                    style={{ fontFamily: 'var(--font-primary)', color: podiumColor ?? 'rgba(255,255,255,0.2)' }}
                   >
                     {entry.rank}
                   </span>
@@ -311,7 +311,7 @@ export default function DailyChallenge() {
                     <span
                       className="text-xs font-bold uppercase tracking-[0.08em] truncate"
                       style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-primary)',
                         color: entry.isSelf ? LIME_HEX : 'rgba(255,255,255,0.6)',
                       }}
                     >
@@ -331,7 +331,7 @@ export default function DailyChallenge() {
                   </span>
                   <span
                     className="text-[0.6rem] font-bold tabular-nums text-right"
-                    style={{ fontFamily: 'var(--font-display)', color: podiumColor ?? LIME_HEX }}
+                    style={{ fontFamily: 'var(--font-primary)', color: podiumColor ?? LIME_HEX }}
                   >
                     {entry.score.toLocaleString()}
                   </span>

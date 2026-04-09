@@ -75,7 +75,7 @@ export default function PlayerProfile() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #091a1f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -95,9 +95,9 @@ export default function PlayerProfile() {
         <motion.div
           className="relative overflow-hidden mb-6"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: `2px solid ${SOCIAL}`,
-            boxShadow: `6px 6px 0px ${SOCIAL}`,
+            boxShadow: 'var(--shadow-lg)',
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -112,7 +112,7 @@ export default function PlayerProfile() {
             {/* Avatar */}
             <motion.div
               className="w-16 h-16 flex items-center justify-center text-2xl mb-3"
-              style={{ border: `3px solid ${SOCIAL}`, color: SOCIAL }}
+              style={{ border: `2px solid ${SOCIAL}`, color: SOCIAL }}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.15, type: 'spring', stiffness: 300 }}
@@ -124,7 +124,7 @@ export default function PlayerProfile() {
             <div className="flex items-center gap-2 mb-2">
               <h1
                 className="text-xl font-black uppercase tracking-[0.12em]"
-                style={{ fontFamily: 'var(--font-display)' }}
+                style={{ fontFamily: 'var(--font-primary)' }}
               >
                 {player.username}
               </h1>
@@ -157,12 +157,12 @@ export default function PlayerProfile() {
               <motion.button
                 className="flex-1 py-2.5 text-[0.55rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   background: SOCIAL,
-                  color: '#0a0a0f',
-                  boxShadow: '4px 4px 0px #fff',
+                  color: 'var(--bg-primary)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
-                whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+                whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigate(`/social/challenge/${playerId}`)}
               >
@@ -172,12 +172,12 @@ export default function PlayerProfile() {
               <motion.button
                 className="flex-1 py-2.5 text-[0.55rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   color: SOCIAL,
                   border: `2px solid ${SOCIAL}`,
-                  boxShadow: `3px 3px 0px ${SOCIAL}40`,
+                  boxShadow: 'var(--shadow-sm)',
                 }}
-                whileHover={{ boxShadow: `5px 5px 0px ${SOCIAL}60`, y: -2 }}
+                whileHover={{ boxShadow: 'var(--shadow-md)', y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
                 Add Friend
@@ -202,11 +202,11 @@ export default function PlayerProfile() {
             <div
               key={s.label}
               className="flex flex-col items-center gap-1 py-3"
-              style={{ background: '#0c0c14', border: '1px solid rgba(255,255,255,0.04)' }}
+              style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.04)' }}
             >
               <span
                 className="text-base font-black tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: SOCIAL }}
+                style={{ fontFamily: 'var(--font-primary)', color: SOCIAL }}
               >
                 {s.value}
               </span>
@@ -220,7 +220,7 @@ export default function PlayerProfile() {
         {/* Win Rate by Mode */}
         <motion.div
           className="overflow-hidden"
-          style={{ background: '#0c0c14', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.06)' }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
@@ -229,7 +229,7 @@ export default function PlayerProfile() {
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: SOCIAL }} />
             <h3
               className="text-[0.55rem] font-bold uppercase tracking-[0.2em] text-white/40"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               Win Rate by Mode
             </h3>
@@ -256,7 +256,7 @@ export default function PlayerProfile() {
                 </div>
                 <span
                   className="text-[0.55rem] font-bold tabular-nums w-10 text-right"
-                  style={{ fontFamily: 'var(--font-display)', color: SOCIAL }}
+                  style={{ fontFamily: 'var(--font-primary)', color: SOCIAL }}
                 >
                   {ms.winRate}%
                 </span>

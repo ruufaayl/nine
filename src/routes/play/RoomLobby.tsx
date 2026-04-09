@@ -42,9 +42,9 @@ function PlayerCard({
       <div
         className="relative px-5 py-6 text-center"
         style={{
-          background: '#0c0c14',
+          background: 'var(--bg-surface)',
           border: `2px solid ${isReady ? accent : 'rgba(255,255,255,0.1)'}`,
-          boxShadow: isReady ? `4px 4px 0px ${accent}` : '4px 4px 0px rgba(255,255,255,0.05)',
+          boxShadow: isReady ? 'var(--shadow-md)' : 'var(--shadow-sm)',
           transition: 'all 0.3s ease',
         }}
       >
@@ -60,7 +60,7 @@ function PlayerCard({
         {/* Username */}
         <h3
           className="text-sm font-black uppercase tracking-[0.12em] mb-1"
-          style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+          style={{ fontFamily: 'var(--font-primary)', color: '#fff' }}
         >
           {username}
         </h3>
@@ -76,9 +76,9 @@ function PlayerCard({
             className="w-full py-2.5 text-[0.6rem] font-bold uppercase tracking-[0.2em] cursor-pointer"
             style={{
               background: isReady ? accent : 'transparent',
-              color: isReady ? '#0a0a0f' : 'rgba(255,255,255,0.4)',
+              color: isReady ? 'var(--bg-primary)' : 'rgba(255,255,255,0.4)',
               border: isReady ? 'none' : '1px solid rgba(255,255,255,0.15)',
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
             }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
@@ -93,7 +93,7 @@ function PlayerCard({
               background: isReady ? `${accent}20` : 'transparent',
               color: isReady ? accent : 'rgba(255,255,255,0.2)',
               border: `1px solid ${isReady ? `${accent}40` : 'rgba(255,255,255,0.06)'}`,
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
             }}
           >
             {isReady ? '✓ READY' : 'WAITING…'}
@@ -194,7 +194,7 @@ export default function RoomLobby() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 30%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -207,7 +207,7 @@ export default function RoomLobby() {
         >
           <h1
             className="text-xl font-black uppercase tracking-[0.2em] mb-2"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Room Lobby
           </h1>
@@ -246,7 +246,7 @@ export default function RoomLobby() {
             <span
               className="text-xl font-black"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 color: allReady ? accent : 'rgba(255,255,255,0.15)',
                 textShadow: allReady ? `0 0 20px ${accent}50` : 'none',
                 transition: 'all 0.3s',
@@ -282,7 +282,7 @@ export default function RoomLobby() {
             >
               <span
                 className="text-[0.5rem] uppercase tracking-[0.3em]"
-                style={{ color: `${accent}88`, fontFamily: 'var(--font-display)' }}
+                style={{ color: `${accent}88`, fontFamily: 'var(--font-primary)' }}
               >
                 Game Starts In
               </span>
@@ -290,7 +290,7 @@ export default function RoomLobby() {
                 key={countdown}
                 className="text-6xl font-black tabular-nums"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   color: accent,
                   textShadow: `0 0 40px ${accent}50`,
                 }}
@@ -310,7 +310,7 @@ export default function RoomLobby() {
             <motion.span
               className="text-5xl font-black"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 color: accent,
                 textShadow: `0 0 60px ${accent}80`,
               }}

@@ -23,7 +23,7 @@ interface RaceModeProps {
 
 function SearchRadar({ onCancel }: { onCancel: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0f] text-white gap-8 px-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--bg-primary)] text-white gap-8 px-6">
       {/* Radar */}
       <div className="relative w-32 h-32">
         {/* Concentric rings */}
@@ -205,12 +205,11 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
     isPencilMode,
     errors,
     isComplete,
-    activeTheme,
-    xp,
-    foggedCells,
+    earnedXP,
     initGame,
     selectCell,
     fillCell,
+    eraseCell,
     togglePencil,
     resetGame,
   } = useGameState();
@@ -223,7 +222,7 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
   // ── Init the puzzle when match starts ──
   useEffect(() => {
     if (matchState === 'playing' && matchInfo) {
-      initGame('medium', 'jade-serpent', 'classic');
+      initGame('medium');
       setElapsed(0);
       prevCellCountRef.current = 0;
       sentBoxesRef.current = new Set();
@@ -292,18 +291,14 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
   // ── Detect win and broadcast ──
   useEffect(() => {
     if (isComplete && matchState === 'playing') {
-      sendGameWon(elapsed * 1000, xp);
+      sendGameWon(elapsed * 1000, earnedXP);
     }
-  }, [isComplete, matchState, elapsed, xp, sendGameWon]);
+  }, [isComplete, matchState, elapsed, earnedXP, sendGameWon]);
 
   // ── Erase handler ──
   const handleErase = useCallback(() => {
-    if (!currentGrid || !selectedCell) return;
-    const cell = currentGrid[selectedCell.row][selectedCell.col];
-    if (!cell.isGiven && cell.value !== null) {
-      fillCell(cell.value);
-    }
-  }, [currentGrid, selectedCell, fillCell]);
+    eraseCell();
+  }, [eraseCell]);
 
   // ── Handle rematch ──
   const handleRematch = useCallback(() => {
@@ -312,20 +307,18 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
   }, [resetRace, findMatch]);
 
   // ── Theme vars ──
-  const themeVars = activeTheme
-    ? ({
-        '--color-background': activeTheme.colors.background,
-        '--color-grid-lines': activeTheme.colors.gridLines,
-        '--color-primary-text': activeTheme.colors.primaryText,
-        '--color-accent': activeTheme.colors.accent,
-        '--color-error': activeTheme.colors.error,
-      } as React.CSSProperties)
-    : {};
+  const themeVars = {
+    '--color-background': 'var(--bg-primary)',
+    '--color-grid-lines': 'var(--border-default)',
+    '--color-primary-text': 'var(--text-primary)',
+    '--color-accent': 'var(--accent-primary)',
+    '--color-error': 'var(--accent-error)',
+  } as React.CSSProperties;
 
   // ── IDLE: find match button ──
   if (matchState === 'idle') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0f] text-white gap-8 px-6">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--bg-primary)] text-white gap-8 px-6">
         <div className="flex flex-col items-center gap-4 text-center">
           <motion.h1
             className="text-5xl font-black tracking-tight"
@@ -341,7 +334,7 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
 
         <motion.button
           className="px-8 py-4 rounded-xl text-sm font-black uppercase tracking-[0.2em]"
-          style={{ background: '#a855f7', color: '#0a0a0f' }}
+          style={{ background: '#a855f7', color: 'var(--bg-primary)' }}
           whileHover={{ scale: 1.05, opacity: 0.9 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => findMatch('prime-grid')}
@@ -420,9 +413,9 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
                 selectedCell={selectedCell}
                 errors={errors}
                 isPencilMode={isPencilMode}
-                foggedCells={foggedCells}
                 onSelectCell={selectCell}
                 onFillCell={fillCell}
+                onErase={handleErase}
                 onTogglePencil={togglePencil}
               />
               <NumberPad
@@ -453,7 +446,7 @@ export function RaceMode({ user, onExit }: RaceModeProps) {
           <ResultOverlay
             result={matchResult}
             elapsed={elapsed}
-            xp={xp}
+            xp={earnedXP}
             onExit={onExit}
             onRematch={handleRematch}
           />

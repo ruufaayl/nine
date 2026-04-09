@@ -84,7 +84,7 @@ export default function GameReview() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #0f1a08 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -108,7 +108,7 @@ export default function GameReview() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Game Review
           </h1>
@@ -121,9 +121,9 @@ export default function GameReview() {
         <motion.div
           className="mb-6"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: `2px solid ${resultColor}`,
-            boxShadow: `4px 4px 0px ${resultColor}`,
+            boxShadow: 'var(--shadow-md)',
           }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,7 +132,7 @@ export default function GameReview() {
           <div className="px-5 py-3 border-b border-white/[0.04]">
             <span
               className="text-[0.5rem] font-bold uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-display)', color: `${CYAN}99` }}
+              style={{ fontFamily: 'var(--font-primary)', color: `${CYAN}99` }}
             >
               Head to Head
             </span>
@@ -142,13 +142,13 @@ export default function GameReview() {
             <div className="text-center">
               <span
                 className="text-xs font-bold uppercase tracking-[0.08em] block mb-2"
-                style={{ fontFamily: 'var(--font-display)', color: LIME }}
+                style={{ fontFamily: 'var(--font-primary)', color: LIME }}
               >
                 {review.player.name}
               </span>
               <span
                 className="text-lg font-black tabular-nums block"
-                style={{ fontFamily: 'var(--font-display)', color: LIME }}
+                style={{ fontFamily: 'var(--font-primary)', color: LIME }}
               >
                 {review.player.score.toLocaleString()}
               </span>
@@ -159,7 +159,7 @@ export default function GameReview() {
             <div className="flex flex-col items-center justify-center gap-2">
               <span
                 className="text-[0.55rem] font-bold uppercase"
-                style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.15)' }}
+                style={{ fontFamily: 'var(--font-primary)', color: 'rgba(255,255,255,0.15)' }}
               >
                 VS
               </span>
@@ -170,13 +170,13 @@ export default function GameReview() {
             <div className="text-center">
               <span
                 className="text-xs font-bold uppercase tracking-[0.08em] block mb-2"
-                style={{ fontFamily: 'var(--font-display)', color: RED }}
+                style={{ fontFamily: 'var(--font-primary)', color: RED }}
               >
                 {review.opponent.name}
               </span>
               <span
                 className="text-lg font-black tabular-nums block"
-                style={{ fontFamily: 'var(--font-display)', color: RED }}
+                style={{ fontFamily: 'var(--font-primary)', color: RED }}
               >
                 {review.opponent.score.toLocaleString()}
               </span>
@@ -221,7 +221,7 @@ export default function GameReview() {
         <motion.div
           className="mb-6"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: '1px solid rgba(255,255,255,0.06)',
           }}
           initial={{ opacity: 0, y: 12 }}
@@ -231,7 +231,7 @@ export default function GameReview() {
           <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
             <span
               className="text-[0.5rem] font-bold uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-display)', color: `${CYAN}99` }}
+              style={{ fontFamily: 'var(--font-primary)', color: `${CYAN}99` }}
             >
               Grid Heatmap
             </span>
@@ -285,7 +285,7 @@ export default function GameReview() {
         {/* Move Timeline */}
         <motion.div
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: '1px solid rgba(255,255,255,0.06)',
           }}
           initial={{ opacity: 0, y: 12 }}
@@ -295,7 +295,7 @@ export default function GameReview() {
           <div className="px-5 py-3 border-b border-white/[0.04]">
             <span
               className="text-[0.5rem] font-bold uppercase tracking-[0.2em]"
-              style={{ fontFamily: 'var(--font-display)', color: `${CYAN}99` }}
+              style={{ fontFamily: 'var(--font-primary)', color: `${CYAN}99` }}
             >
               Move Timeline
             </span>
@@ -313,7 +313,7 @@ export default function GameReview() {
                 {/* Turn number */}
                 <span
                   className="w-6 text-[0.5rem] font-bold tabular-nums shrink-0"
-                  style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.15)' }}
+                  style={{ fontFamily: 'var(--font-primary)', color: 'rgba(255,255,255,0.15)' }}
                 >
                   {String(move.turn).padStart(2, '0')}
                 </span>
@@ -341,7 +341,7 @@ export default function GameReview() {
                 <span
                   className="text-[0.5rem] font-bold tabular-nums w-10 text-right shrink-0"
                   style={{
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-primary)',
                     color: move.points > 0 ? LIME : RED,
                   }}
                 >

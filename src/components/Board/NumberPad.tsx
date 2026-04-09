@@ -1,79 +1,18 @@
 // ──────────────────────────────────────────────
-// NINE — NumberPad Component
+// NINE — NumberPad (Liquid Design)
 // ──────────────────────────────────────────────
 
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import type { Grid } from '../../types/game';
 
-// ─── Types ───────────────────────────────────
-
 interface NumberPadProps {
-  grid: Grid | null;
+  grid: Grid;
   isPencilMode: boolean;
   onFillCell: (value: number) => void;
   onErase: () => void;
   onTogglePencil: () => void;
 }
-
-// ─── Helpers ─────────────────────────────────
-
-/** Count how many times `value` appears in the grid. */
-function countValue(grid: Grid, value: number): number {
-  let count = 0;
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      if (grid[r][c].value === value) count++;
-    }
-  }
-  return count;
-}
-
-// ─── Sub-components ──────────────────────────
-
-interface DigitButtonProps {
-  value: number;
-  isExhausted: boolean;
-  onPress: (value: number) => void;
-}
-
-function DigitButton({ value, isExhausted, onPress }: DigitButtonProps) {
-  return (
-    <motion.button
-      className={clsx(
-        'relative flex items-center justify-center',
-        'rounded-lg text-2xl font-bold tabular-nums',
-        'w-full aspect-square',
-        'transition-opacity duration-150',
-        isExhausted ? 'opacity-20 cursor-default' : 'cursor-pointer',
-      )}
-      style={{
-        background: 'var(--color-grid-lines)',
-        color: isExhausted ? 'var(--color-primary-text)' : 'var(--color-accent)',
-        border: '1px solid transparent',
-      }}
-      whileHover={
-        isExhausted
-          ? {}
-          : {
-              scale: 1.08,
-              borderColor: 'var(--color-accent)',
-              backgroundColor: 'var(--color-accent)',
-              color: 'var(--color-background)',
-            }
-      }
-      whileTap={isExhausted ? {} : { scale: 0.94 }}
-      onClick={() => !isExhausted && onPress(value)}
-      aria-label={`Place ${value}`}
-      aria-disabled={isExhausted}
-      tabIndex={isExhausted ? -1 : 0}
-    >
-      {value}
-    </motion.button>
-  );
-}
-
-// ─── Main Component ──────────────────────────
 
 export function NumberPad({
   grid,
@@ -82,136 +21,114 @@ export function NumberPad({
   onErase,
   onTogglePencil,
 }: NumberPadProps) {
-  // Pre-compute which digits are fully placed (9 instances = exhausted)
-  const exhausted = new Set<number>();
-  if (grid) {
-    for (let v = 1; v <= 9; v++) {
-      if (countValue(grid, v) >= 9) exhausted.add(v);
+  // Count remaining instances of each digit
+  const counts = new Map<number, number>();
+  for (let d = 1; d <= 9; d++) {
+    let count = 0;
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (grid[r][c].value === d && grid[r][c].isValid) count++;
+      }
     }
+    counts.set(d, count);
   }
 
   return (
-    <div className="flex flex-col gap-3 w-full" style={{ maxWidth: 'min(90vw, 540px)' }}>
-      {/* Digit grid: 3 columns × 3 rows */}
-      <div className="grid grid-cols-9 gap-1.5">
-        {Array.from({ length: 9 }, (_, i) => i + 1).map((n) => (
-          <DigitButton
-            key={n}
-            value={n}
-            isExhausted={exhausted.has(n)}
-            onPress={onFillCell}
-          />
-        ))}
+    <div className="flex flex-col items-center gap-3 w-full" style={{ maxWidth: 'min(88vw, 480px)' }}>
+      {/* Number buttons */}
+      <div className="grid grid-cols-9 gap-1.5 w-full">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+          const filled = counts.get(n) ?? 0;
+          const isComplete = filled >= 9;
+
+          return (
+            <motion.button
+              key={n}
+              className={clsx(
+                'relative flex flex-col items-center justify-center',
+                'aspect-square outline-none cursor-pointer select-none',
+                'transition-all duration-200',
+                isComplete && 'opacity-25 pointer-events-none',
+              )}
+              style={{
+                fontFamily: 'var(--font-primary)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+              }}
+              whileHover={{
+                background: 'var(--bg-card-hover)',
+                borderColor: 'var(--border-default)',
+                scale: 1.05,
+              }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => onFillCell(n)}
+            >
+              <span className="text-lg font-semibold tabular-nums leading-none">
+                {n}
+              </span>
+              <span
+                className="text-[0.45rem] tabular-nums mt-0.5"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                {9 - filled}
+              </span>
+            </motion.button>
+          );
+        })}
       </div>
 
-      {/* Controls row: Erase + Pencil toggle */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Action buttons */}
+      <div className="flex items-center gap-2 w-full">
         {/* Erase */}
         <motion.button
           className={clsx(
-            'flex items-center justify-center gap-2',
-            'rounded-lg px-4 py-3',
-            'text-sm font-semibold uppercase tracking-widest',
+            'flex-1 flex items-center justify-center gap-2',
+            'py-3 outline-none cursor-pointer select-none',
+            'text-xs font-semibold',
           )}
           style={{
-            background: 'var(--color-grid-lines)',
-            color: 'var(--color-primary-text)',
-            border: '1px solid transparent',
+            fontFamily: 'var(--font-primary)',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-secondary)',
           }}
-          whileHover={{
-            borderColor: 'var(--color-error)',
-            color: 'var(--color-error)',
-          }}
-          whileTap={{ scale: 0.96 }}
+          whileHover={{ background: 'var(--bg-card-hover)' }}
+          whileTap={{ scale: 0.97 }}
           onClick={onErase}
-          aria-label="Erase selected cell"
         >
-          <EraserIcon />
-          Erase
+          <span>⌫</span>
+          <span>Erase</span>
         </motion.button>
 
-        {/* Pencil toggle */}
+        {/* Pencil Mode */}
         <motion.button
           className={clsx(
-            'flex items-center justify-center gap-2',
-            'rounded-lg px-4 py-3',
-            'text-sm font-semibold uppercase tracking-widest',
+            'flex-1 flex items-center justify-center gap-2',
+            'py-3 outline-none cursor-pointer select-none',
+            'text-xs font-semibold',
           )}
           style={{
+            fontFamily: 'var(--font-primary)',
             background: isPencilMode
-              ? 'var(--color-accent)'
-              : 'var(--color-grid-lines)',
-            color: isPencilMode
-              ? 'var(--color-background)'
-              : 'var(--color-primary-text)',
-            border: '1px solid transparent',
+              ? 'rgba(108, 99, 255, 0.12)'
+              : 'var(--bg-card)',
+            border: isPencilMode
+              ? '1px solid rgba(108, 99, 255, 0.3)'
+              : '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-sm)',
+            color: isPencilMode ? 'var(--accent-primary)' : 'var(--text-secondary)',
           }}
-          whileHover={
-            isPencilMode
-              ? { opacity: 0.85 }
-              : { borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }
-          }
-          whileTap={{ scale: 0.96 }}
+          whileHover={{ background: isPencilMode ? 'rgba(108, 99, 255, 0.18)' : 'var(--bg-card-hover)' }}
+          whileTap={{ scale: 0.97 }}
           onClick={onTogglePencil}
-          aria-label={isPencilMode ? 'Disable pencil mode' : 'Enable pencil mode'}
-          aria-pressed={isPencilMode}
         >
-          <PencilIcon />
-          Pencil
-          {isPencilMode && (
-            <motion.span
-              className="ml-1 text-xs rounded-full px-1.5 py-0.5"
-              style={{ background: 'var(--color-background)', color: 'var(--color-accent)' }}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-            >
-              ON
-            </motion.span>
-          )}
+          <span>✏️</span>
+          <span>Notes {isPencilMode ? 'ON' : 'OFF'}</span>
         </motion.button>
       </div>
     </div>
-  );
-}
-
-// ─── Icons ────────────────────────────────────
-
-function EraserIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-      <path d="M22 21H7" />
-      <path d="m5 11 9 9" />
-    </svg>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-      <path d="m15 5 4 4" />
-    </svg>
   );
 }

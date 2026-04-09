@@ -50,7 +50,7 @@ export default function Search() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #091a1f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -63,7 +63,7 @@ export default function Search() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Search
           </h1>
@@ -82,7 +82,7 @@ export default function Search() {
           <div
             className="flex items-center gap-3 px-4 py-3.5"
             style={{
-              background: '#0c0c14',
+              background: 'var(--bg-surface)',
               border: `2px solid ${focused ? SOCIAL : 'rgba(255,255,255,0.1)'}`,
               boxShadow: focused ? `0 0 20px ${SOCIAL}15` : 'none',
               transition: 'all 0.2s',
@@ -98,7 +98,7 @@ export default function Search() {
               onBlur={() => setFocused(false)}
               placeholder="Search by callsign…"
               className="flex-1 bg-transparent text-sm text-white outline-none uppercase tracking-wider placeholder:text-white/15 placeholder:normal-case"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
               autoFocus
             />
             {query && (
@@ -136,7 +136,7 @@ export default function Search() {
                       onClick={() => handleSelect(player.id)}
                       className="flex items-center gap-4 w-full px-5 py-4 text-left cursor-pointer group"
                       style={{
-                        background: '#0c0c14',
+                        background: 'var(--bg-surface)',
                         border: '1px solid rgba(255,255,255,0.06)',
                       }}
                       initial={{ opacity: 0, x: -8 }}
@@ -144,7 +144,7 @@ export default function Search() {
                       transition={{ delay: i * 0.04 }}
                       whileHover={{
                         borderColor: `${SOCIAL}40`,
-                        boxShadow: `4px 4px 0px ${SOCIAL}`,
+                        boxShadow: 'var(--shadow-md)',
                         x: -2,
                         y: -2,
                       }}
@@ -162,7 +162,7 @@ export default function Search() {
                         {player.online && (
                           <div
                             className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full"
-                            style={{ background: '#22c55e', border: '2px solid #0c0c14' }}
+                            style={{ background: '#22c55e', border: '2px solid var(--bg-surface)' }}
                           />
                         )}
                       </div>
@@ -172,7 +172,7 @@ export default function Search() {
                         <div className="flex items-center gap-2 mb-0.5">
                           <span
                             className="text-sm font-bold uppercase tracking-[0.08em] truncate"
-                            style={{ fontFamily: 'var(--font-display)' }}
+                            style={{ fontFamily: 'var(--font-primary)' }}
                           >
                             {player.username}
                           </span>

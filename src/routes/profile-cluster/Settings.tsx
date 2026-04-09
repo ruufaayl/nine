@@ -86,7 +86,7 @@ export default function Settings() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -110,7 +110,7 @@ export default function Settings() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)', color: PURPLE }}
+            style={{ fontFamily: 'var(--font-primary)', color: PURPLE }}
           >
             Settings
           </h1>
@@ -128,7 +128,7 @@ export default function Settings() {
         >
           <h2
             className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: `${PURPLE}99` }}
+            style={{ fontFamily: 'var(--font-primary)', color: `${PURPLE}99` }}
           >
             Theme
           </h2>
@@ -141,11 +141,11 @@ export default function Settings() {
                   onClick={() => update({ theme: t })}
                   className="flex-1 py-3 text-[0.55rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    background: active ? PURPLE : '#0c0c14',
-                    color: active ? '#0a0a0f' : 'rgba(255,255,255,0.3)',
+                    fontFamily: 'var(--font-primary)',
+                    background: active ? PURPLE : 'var(--bg-surface)',
+                    color: active ? 'var(--bg-primary)' : 'rgba(255,255,255,0.3)',
                     border: `2px solid ${active ? PURPLE : 'rgba(255,255,255,0.06)'}`,
-                    boxShadow: active ? '3px 3px 0px #fff' : 'none',
+                    boxShadow: active ? 'var(--shadow-md)' : 'none',
                   }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -165,7 +165,7 @@ export default function Settings() {
         >
           <h2
             className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: `${PURPLE}99` }}
+            style={{ fontFamily: 'var(--font-primary)', color: `${PURPLE}99` }}
           >
             Input Style
           </h2>
@@ -178,11 +178,11 @@ export default function Settings() {
                   onClick={() => update({ inputStyle: s })}
                   className="flex-1 py-3 text-[0.55rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    background: active ? '#0c0c14' : 'transparent',
+                    fontFamily: 'var(--font-primary)',
+                    background: active ? 'var(--bg-surface)' : 'transparent',
                     color: active ? PURPLE : 'rgba(255,255,255,0.25)',
                     border: `2px solid ${active ? PURPLE : 'rgba(255,255,255,0.06)'}`,
-                    boxShadow: active ? `3px 3px 0px ${PURPLE}` : 'none',
+                    boxShadow: active ? 'var(--shadow-md)' : 'none',
                   }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -202,7 +202,7 @@ export default function Settings() {
         >
           <h2
             className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: `${PURPLE}99` }}
+            style={{ fontFamily: 'var(--font-primary)', color: `${PURPLE}99` }}
           >
             Audio & Feedback
           </h2>
@@ -216,7 +216,7 @@ export default function Settings() {
               key={item.key}
               className="flex items-center justify-between px-5 py-4"
               style={{
-                background: '#0c0c14',
+                background: 'var(--bg-surface)',
                 border: '1px solid rgba(255,255,255,0.04)',
               }}
             >
@@ -238,7 +238,7 @@ export default function Settings() {
         >
           <h2
             className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: `${PURPLE}99` }}
+            style={{ fontFamily: 'var(--font-primary)', color: `${PURPLE}99` }}
           >
             System
           </h2>
@@ -251,7 +251,7 @@ export default function Settings() {
               key={item.key}
               className="flex items-center justify-between px-5 py-4"
               style={{
-                background: '#0c0c14',
+                background: 'var(--bg-surface)',
                 border: '1px solid rgba(255,255,255,0.04)',
               }}
             >
@@ -272,7 +272,7 @@ export default function Settings() {
         >
           <h2
             className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3"
-            style={{ fontFamily: 'var(--font-display)', color: '#ff6b6b99' }}
+            style={{ fontFamily: 'var(--font-primary)', color: '#ff6b6b99' }}
           >
             Danger Zone
           </h2>
@@ -280,10 +280,10 @@ export default function Settings() {
             <motion.button
               className="w-full py-3 text-[0.6rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 color: '#ff6b6b',
                 border: '2px solid rgba(255,107,107,0.15)',
-                boxShadow: '3px 3px 0px rgba(255,107,107,0.06)',
+                boxShadow: 'var(--shadow-sm)',
               }}
               whileHover={{ borderColor: 'rgba(255,107,107,0.4)' }}
               whileTap={{ scale: 0.97 }}
@@ -297,10 +297,10 @@ export default function Settings() {
             <motion.button
               className="w-full py-3 text-[0.6rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 color: '#ff6b6b',
                 border: '2px solid rgba(255,107,107,0.15)',
-                boxShadow: '3px 3px 0px rgba(255,107,107,0.06)',
+                boxShadow: 'var(--shadow-sm)',
               }}
               whileHover={{ borderColor: 'rgba(255,107,107,0.4)' }}
               whileTap={{ scale: 0.97 }}

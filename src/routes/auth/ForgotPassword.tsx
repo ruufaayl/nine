@@ -59,7 +59,7 @@ export default function ForgotPassword() {
         <div className="text-center mb-8">
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] text-white mb-2"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{ fontFamily: 'var(--font-primary)' }}
           >
             Reset Access
           </h1>
@@ -87,7 +87,7 @@ export default function ForgotPassword() {
                   className="w-full px-4 py-3 text-sm text-white bg-transparent outline-none"
                   style={{
                     border: `2px solid ${errors.email ? '#ff6b6b' : 'rgba(255,255,255,0.1)'}`,
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-primary)',
                   }}
                   placeholder="agent@nine.io"
                   {...register('email', {
@@ -116,12 +116,12 @@ export default function ForgotPassword() {
                 disabled={submitting}
                 className="w-full py-3.5 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer disabled:opacity-40"
                 style={{
-                  fontFamily: 'var(--font-display)',
-                  background: 'var(--laser-orange)',
-                  color: '#0a0a0f',
-                  boxShadow: '4px 4px 0px #fff',
+                  fontFamily: 'var(--font-primary)',
+                  background: 'var(--accent-warning)',
+                  color: 'var(--bg-primary)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
-                whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+                whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
                 {submitting ? 'Sending…' : 'Send Reset Link'}

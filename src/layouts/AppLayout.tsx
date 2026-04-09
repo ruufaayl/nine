@@ -1,11 +1,11 @@
 // ──────────────────────────────────────────────
-// NINE — App Layout (persistent nav)
-// Wraps Home, Play, Social, Rankings, Profile
+// NINE — App Layout (Liquid Nav + Theme Toggle)
 // ──────────────────────────────────────────────
 
 import { Outlet, useNavigate, useLocation, useLoaderData, useOutletContext } from 'react-router';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { useTheme } from '../hooks/useTheme';
 import type { LoaderFunctionArgs } from 'react-router';
 
 // ─── Types ──────────────────────────────────
@@ -25,6 +25,9 @@ export interface AppUser {
   bio: string | null;
   isGuest?: boolean;
   createdAt: string;
+  coins: number;
+  trophies: number;
+  level: number;
 }
 
 export interface AppContext {
@@ -55,14 +58,62 @@ export function useUser(): AppUser | null {
   return ctx?.user ?? null;
 }
 
+// ─── Theme Toggle Button ────────────────────
+
+function ThemeToggle() {
+  const { theme, toggleTheme, isDark } = useTheme();
+
+  return (
+    <motion.button
+      onClick={toggleTheme}
+      className="relative w-9 h-9 flex items-center justify-center outline-none cursor-pointer"
+      style={{
+        borderRadius: 'var(--radius-full)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
+      }}
+      whileHover={{ scale: 1.08, borderColor: 'var(--border-default)' }}
+      whileTap={{ scale: 0.92 }}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+    >
+      <AnimatePresence mode="wait">
+        {isDark ? (
+          <motion.span
+            key="sun"
+            initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+            className="text-sm"
+          >
+            ☀️
+          </motion.span>
+        ) : (
+          <motion.span
+            key="moon"
+            initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.2 }}
+            className="text-sm"
+          >
+            🌙
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
+
 // ─── Nav Items ──────────────────────────────
 
 const NAV_ITEMS = [
-  { label: 'Home',     path: '/',            icon: '⬡' },
-  { label: 'Play',     path: '/play',        icon: '◈' },
-  { label: 'Social',   path: '/social',      icon: '⟁' },
-  { label: 'Rankings', path: '/rankings',    icon: '⧖' },
-  { label: 'Profile',  path: '/me',          icon: '◇' },
+  { label: 'Home',     path: '/',         icon: '⌂' },
+  { label: 'Play',     path: '/play',     icon: '▶' },
+  { label: 'Social',   path: '/social',   icon: '●●' },
+  { label: 'Ranks',    path: '/rankings', icon: '◆' },
+  { label: 'Profile',  path: '/me',       icon: '○' },
 ] as const;
 
 // ─── Component ──────────────────────────────
@@ -77,108 +128,160 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="min-h-screen pb-16" style={{ background: 'var(--bg-obsidian)' }}>
+    <div
+      className="min-h-screen pb-20"
+      style={{ background: 'var(--bg-primary)' }}
+    >
       {/* ── Top Header Bar ── */}
       <motion.header
         className={clsx(
           'fixed top-0 left-0 right-0 z-50',
           'flex items-center justify-between',
-          'h-12 px-5',
-          'border-b border-white/[0.06]',
-          'bg-[#0a0a0f]/80 backdrop-blur-md',
+          'h-14 px-5',
         )}
-        initial={{ y: -48, opacity: 0 }}
+        style={{
+          background: 'var(--nav-bg)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderBottom: '1px solid var(--nav-border)',
+        }}
+        initial={{ y: -56, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
         {/* Logo */}
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 outline-none group">
-          <span className="text-base font-black tracking-tighter text-white group-hover:text-white/80 transition-colors">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2.5 outline-none group"
+        >
+          <span
+            className="text-lg font-extrabold tracking-tight group-hover:opacity-80 transition-opacity"
+            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-primary)' }}
+          >
             NINE
-          </span>
-          <span className="text-[0.45rem] uppercase tracking-[0.3em] text-white/15 hidden sm:inline">
-            Protocol
           </span>
         </button>
 
-        {/* User info / Auth CTA */}
-        <div className="flex items-center gap-3">
+        {/* Right: Theme toggle + Coins + Trophies + User */}
+        <div className="flex items-center gap-2.5">
+          <ThemeToggle />
+
+          {user && (
+            <>
+              {/* Coins */}
+              <div className="pill pill-gold gap-1.5">
+                <span style={{ fontSize: '0.7rem' }}>🪙</span>
+                <span className="tabular-nums">{(user.coins ?? 5000).toLocaleString()}</span>
+              </div>
+              {/* Trophies */}
+              <div className="pill pill-trophy gap-1.5">
+                <span style={{ fontSize: '0.7rem' }}>🏆</span>
+                <span className="tabular-nums">{(user.trophies ?? 0).toLocaleString()}</span>
+              </div>
+            </>
+          )}
+
           {user ? (
-            <button onClick={() => navigate('/me')} className="flex items-center gap-2 outline-none group">
-              <span className="text-[0.6rem] font-bold tabular-nums text-white/30 group-hover:text-white/50 transition-colors">
-                {user.xp.toLocaleString()}
-                <span className="text-[0.45rem] uppercase tracking-widest ml-0.5 opacity-50">xp</span>
-              </span>
-              <span className="text-xs font-semibold text-white/70 max-w-[100px] truncate group-hover:text-white/90 transition-colors">
-                {user.username}
-              </span>
+            <button
+              onClick={() => navigate('/me')}
+              className="flex items-center gap-2.5 outline-none group ml-0.5"
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{
+                  background: 'var(--accent-primary)',
+                  color: '#fff',
+                }}
+              >
+                {user.username.charAt(0).toUpperCase()}
+              </div>
             </button>
           ) : (
             <motion.button
               onClick={() => navigate('/auth')}
               className={clsx(
-                'text-[0.6rem] font-bold uppercase tracking-[0.15em]',
-                'px-4 py-1.5 rounded-lg',
-                'border border-white/10 text-white/50 hover:text-white/80 hover:border-white/25',
-                'transition-colors duration-150',
+                'text-xs font-semibold',
+                'px-5 py-2',
+                'transition-all duration-200',
               )}
-              whileHover={{ scale: 1.03 }}
+              style={{
+                fontFamily: 'var(--font-primary)',
+                background: 'var(--accent-primary)',
+                color: '#fff',
+                borderRadius: 'var(--radius-full)',
+                border: 'none',
+              }}
+              whileHover={{ scale: 1.03, opacity: 0.9 }}
               whileTap={{ scale: 0.97 }}
             >
-              Log In / Sign Up
+              Sign In
             </motion.button>
           )}
         </div>
       </motion.header>
 
       {/* ── Main Content ── */}
-      <div className="pt-12">
+      <div className="pt-14">
         <Outlet context={{ user } satisfies AppContext} />
       </div>
 
       {/* ── Bottom Nav Bar ── */}
       <nav
-        className={clsx(
-          'fixed bottom-0 left-0 right-0 z-50',
-          'flex items-center justify-around',
-          'h-14 px-2',
-          'border-t border-white/[0.06]',
-          'bg-[#0a0a0f]/90 backdrop-blur-lg',
-        )}
+        className="fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          background: 'var(--nav-bg)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderTop: '1px solid var(--nav-border)',
+        }}
       >
-        {NAV_ITEMS.map((item) => {
-          const isActive = item === activeTab;
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={clsx(
-                'flex flex-col items-center justify-center gap-0.5',
-                'w-16 py-1 rounded-lg outline-none',
-                'transition-colors duration-150',
-                isActive ? 'text-white' : 'text-white/25 hover:text-white/50',
-              )}
-            >
-              <span className="text-base leading-none">{item.icon}</span>
-              <span
-                className="text-[0.5rem] font-bold uppercase tracking-[0.15em]"
-                style={{ fontFamily: 'var(--font-display)' }}
+        <div className="flex items-center justify-around h-16 px-2 max-w-lg mx-auto">
+          {NAV_ITEMS.map((item) => {
+            const isActive = item === activeTab;
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={clsx(
+                  'relative flex flex-col items-center justify-center gap-1',
+                  'w-16 py-1.5 outline-none',
+                  'transition-all duration-200',
+                )}
+                style={{ borderRadius: 'var(--radius-sm)' }}
               >
-                {item.label}
-              </span>
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-pill"
+                    className="absolute inset-0"
+                    style={{
+                      background: 'rgba(108, 99, 255, 0.1)',
+                      borderRadius: 'var(--radius-sm)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
 
-              {/* Active indicator dot */}
-              {isActive && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="w-1 h-1 rounded-full mt-0.5"
-                  style={{ background: 'var(--cyber-cyan)' }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-            </button>
-          );
-        })}
+                <span
+                  className="relative text-sm leading-none transition-colors duration-200"
+                  style={{
+                    color: isActive ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                  }}
+                >
+                  {item.icon}
+                </span>
+                <span
+                  className="relative text-[0.6rem] font-semibold tracking-wide transition-colors duration-200"
+                  style={{
+                    fontFamily: 'var(--font-primary)',
+                    color: isActive ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                  }}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );

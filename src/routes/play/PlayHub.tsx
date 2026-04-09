@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// S-09 — Play Hub (14-mode grid)
+// S-09 — Play Hub (Liquid Design)
 // ──────────────────────────────────────────────
 
 import { useNavigate } from 'react-router';
@@ -7,41 +7,8 @@ import { motion } from 'framer-motion';
 import {
   GAME_MODES,
   CATEGORY_ACCENTS,
-  CATEGORY_GLYPHS,
   type GameModeEntry,
 } from '../../lib/gameModesData';
-
-// ─── Cosmic Background ──────────────────────
-
-function CosmicBg() {
-  return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
-        }}
-      />
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <pattern id="hub-grid" width="50" height="50" patternUnits="userSpaceOnUse">
-            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#hub-grid)" />
-      </svg>
-      <div
-        className="absolute"
-        style={{
-          top: '25%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: 700, height: 700, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(100,0,180,0.05) 0%, transparent 70%)',
-          animation: 'pulse-glow 8s ease-in-out infinite',
-        }}
-      />
-    </div>
-  );
-}
 
 // ─── Mode Card ──────────────────────────────
 
@@ -53,31 +20,41 @@ interface ModeCardProps {
 
 function ModeCard({ mode, index, onClick }: ModeCardProps) {
   const accent = CATEGORY_ACCENTS[mode.category];
-  const glyph = CATEGORY_GLYPHS[mode.category];
 
   return (
     <motion.button
-      className="relative text-left w-full cursor-pointer select-none group"
-      initial={{ opacity: 0, y: 24 }}
+      className="relative text-left w-full cursor-pointer select-none group outline-none"
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.04, ease: 'easeOut' }}
+      transition={{ duration: 0.35, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
       onClick={onClick}
     >
-      {/* Card body */}
       <div
-        className="relative overflow-hidden px-5 py-5 transition-transform duration-150 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5"
+        className="relative overflow-hidden p-5 transition-all duration-200 group-hover:-translate-y-0.5"
         style={{
-          background: '#0c0c14',
-          border: `2px solid ${accent}`,
-          boxShadow: `4px 4px 0px ${accent}`,
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-lg)',
         }}
       >
-        {/* Category badge */}
-        <div className="flex items-center gap-1.5 mb-3">
-          <span className="text-sm" style={{ color: accent }}>{glyph}</span>
+        {/* Accent glow on hover */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{
+            background: `radial-gradient(ellipse at 30% 0%, ${accent}08, transparent 70%)`,
+            borderRadius: 'var(--radius-lg)',
+          }}
+        />
+
+        {/* Category dot */}
+        <div className="flex items-center gap-2 mb-3">
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{ background: accent }}
+          />
           <span
-            className="text-[0.45rem] font-bold uppercase tracking-[0.2em]"
-            style={{ color: `${accent}88` }}
+            className="text-[0.6rem] font-semibold uppercase tracking-wider"
+            style={{ color: `${accent}99`, fontFamily: 'var(--font-primary)' }}
           >
             {mode.category}
           </span>
@@ -85,40 +62,44 @@ function ModeCard({ mode, index, onClick }: ModeCardProps) {
 
         {/* Mode name */}
         <h3
-          className="text-sm font-black uppercase tracking-[0.1em] mb-1.5"
-          style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+          className="text-sm font-bold mb-1.5"
+          style={{ fontFamily: 'var(--font-primary)', color: 'var(--text-primary)' }}
         >
           {mode.name}
         </h3>
 
         {/* Description */}
-        <p className="text-[0.65rem] leading-relaxed text-white/35">
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
           {mode.description}
         </p>
 
-        {/* Meta row */}
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/[0.06]">
-          <span className="text-[0.5rem] uppercase tracking-widest text-white/20">
+        {/* Meta */}
+        <div
+          className="flex items-center gap-3 mt-3 pt-3"
+          style={{ borderTop: '1px solid var(--border-subtle)' }}
+        >
+          <span className="text-[0.6rem] font-medium" style={{ color: 'var(--text-tertiary)' }}>
             {mode.playerCount}
           </span>
-          <span className="text-[0.5rem] uppercase tracking-widest text-white/20">
+          <span className="text-[0.6rem] font-medium" style={{ color: 'var(--text-tertiary)' }}>
             ~{mode.avgDuration}
           </span>
         </div>
 
         {/* Hover arrow */}
-        <motion.span
-          className="absolute top-5 right-4 text-sm opacity-0 group-hover:opacity-60 transition-opacity"
-          style={{ color: accent }}
+        <span
+          className="absolute top-5 right-4 text-sm opacity-0 group-hover:opacity-40 transition-opacity"
+          style={{ color: 'var(--text-secondary)' }}
         >
           →
-        </motion.span>
+        </span>
 
-        {/* Corner accent */}
+        {/* Hover border */}
         <div
-          className="absolute bottom-0 right-0 w-4 h-4"
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
           style={{
-            background: `linear-gradient(135deg, transparent 50%, ${accent}30 50%)`,
+            border: `1px solid ${accent}25`,
+            borderRadius: 'var(--radius-lg)',
           }}
         />
       </div>
@@ -132,35 +113,29 @@ export default function PlayHub() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-screen text-white">
-      <CosmicBg />
-
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="relative min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <motion.header
-          className="text-center mb-10 select-none"
+          className="mb-8 select-none"
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <h1
-            className="text-3xl sm:text-4xl font-black tracking-[0.15em] uppercase"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-2xl font-extrabold tracking-tight"
+            style={{ fontFamily: 'var(--font-primary)', color: 'var(--text-primary)' }}
           >
-            Play Hub
+            Play
           </h1>
-          <p
-            className="text-[0.55rem] uppercase tracking-[0.4em] mt-2 text-white/25"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Choose Your Protocol · 14 Modes
+          <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
+            Choose a game mode • 14 modes available
           </p>
-          <div className="w-16 h-px bg-white/10 mx-auto mt-3" />
         </motion.header>
 
         {/* Mode Grid */}
         <div
-          className="grid gap-4"
+          className="grid gap-3"
           style={{
             gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
           }}
@@ -174,22 +149,6 @@ export default function PlayHub() {
             />
           ))}
         </div>
-
-        {/* Footer */}
-        <motion.div
-          className="mt-12 flex flex-col items-center gap-3 select-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-        >
-          <div className="w-8 h-px bg-white/10" />
-          <p
-            className="text-[0.5rem] uppercase tracking-[0.3em] text-white/12"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            NINE Protocol · Quick Play
-          </p>
-        </motion.div>
       </div>
     </div>
   );

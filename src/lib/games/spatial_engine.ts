@@ -196,33 +196,34 @@ export function generateShatteredGrid(
 }
 
 /**
- * Create initial game state with fragments scattered.
- * Offsets each fragment's currentCoords by a random displacement
- * so the player must drag them back into place.
+ * Create initial game state with fragments displaced from target.
+ * Each fragment gets a fixed large negative offset so it's clearly
+ * "not placed" (outside the board). The UI renders dock fragments
+ * using their bounding box, so the actual offset values just need
+ * to differ from targetCoords.
  */
 export function createShatteredGridState(
   puzzle: ShatteredGridPuzzle,
 ): ShatteredGridState {
-  const scattered = puzzle.fragments.map((frag) => {
-    // Random offset: shift the whole fragment by ±(width) rows/cols
-    const offsetRow = ((Math.random() * puzzle.height * 2) | 0) - puzzle.height;
-    const offsetCol = ((Math.random() * puzzle.width * 2) | 0) - puzzle.width;
-
+  const displaced = puzzle.fragments.map((frag, i) => {
+    // Place each fragment at a unique negative row band so they don't overlap
+    // and are clearly not at their target positions.
+    const offsetRow = -(puzzle.height + 2 + i * (puzzle.height + 1));
     return {
       ...frag,
       currentCoords: frag.targetCoords.map((c) => ({
         row: c.row + offsetRow,
-        col: c.col + offsetCol,
+        col: c.col,
       })),
     };
   });
 
   // Shuffle order so fragments aren't in solution order
-  shuffle(scattered);
+  shuffle(displaced);
 
   return {
     puzzle,
-    fragments: scattered,
+    fragments: displaced,
     selectedFragmentIndex: null,
     moves: 0,
     isComplete: false,

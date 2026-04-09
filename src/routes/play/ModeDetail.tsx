@@ -1,10 +1,11 @@
 // ──────────────────────────────────────────────
-// S-10 — Mode Detail (rules + Find Match CTA)
+// S-10 — Mode Detail (Liquid Design + Offline/PvP)
 // ──────────────────────────────────────────────
 
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
-import { getModeById, CATEGORY_ACCENTS, CATEGORY_GLYPHS } from '../../lib/gameModesData';
+import { getModeById, CATEGORY_ACCENTS } from '../../lib/gameModesData';
+import { ENTRY_FEES } from '../../lib/economy';
 
 export default function ModeDetail() {
   const { modeId } = useParams<{ modeId: string }>();
@@ -13,111 +14,90 @@ export default function ModeDetail() {
 
   if (!mode) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-white/50">
-        <span className="text-6xl">⚠</span>
-        <p className="text-sm uppercase tracking-widest">Mode not found</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <span className="text-5xl">🔍</span>
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Mode not found</p>
         <button
-          className="text-xs uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+          className="text-sm font-medium cursor-pointer"
+          style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-primary)' }}
           onClick={() => navigate('/play')}
         >
-          ← Back to Play Hub
+          ← Back to Play
         </button>
       </div>
     );
   }
 
   const accent = CATEGORY_ACCENTS[mode.category];
-  const glyph = CATEGORY_GLYPHS[mode.category];
+  const entryFee = ENTRY_FEES['medium']; // default
 
   return (
-    <div className="relative min-h-screen text-white">
-      {/* Background */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
-        }}
-      />
-
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-5 py-8">
-        {/* Back nav */}
+    <div className="relative min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+      <div className="relative z-10 w-full max-w-xl mx-auto px-5 py-8">
+        {/* Back */}
         <motion.button
-          className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors mb-8"
+          className="flex items-center gap-2 text-sm font-medium mb-6 cursor-pointer"
+          style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-primary)' }}
           onClick={() => navigate('/play')}
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
+          whileHover={{ color: 'var(--text-secondary)' }}
           whileTap={{ scale: 0.96 }}
         >
-          ← Play Hub
+          ← Play
         </motion.button>
 
         {/* Mode Card */}
         <motion.div
-          className="relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
+          className="overflow-hidden mb-6"
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            background: '#0c0c14',
-            border: `2px solid ${accent}`,
-            boxShadow: `6px 6px 0px ${accent}`,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-xl)',
           }}
         >
-          {/* Header section */}
-          <div className="px-6 pt-6 pb-5 border-b border-white/[0.06]">
+          {/* Header */}
+          <div className="px-6 pt-6 pb-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-xl" style={{ color: accent }}>{glyph}</span>
-              <span
-                className="text-[0.5rem] font-bold uppercase tracking-[0.25em]"
-                style={{ color: `${accent}88` }}
-              >
+              <div className="w-2.5 h-2.5 rounded-full" style={{ background: accent }} />
+              <span className="text-xs font-semibold" style={{ color: `${accent}99` }}>
                 {mode.category}
               </span>
             </div>
 
             <h1
-              className="text-2xl sm:text-3xl font-black uppercase tracking-[0.12em] mb-2"
-              style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+              className="text-2xl font-extrabold tracking-tight mb-2"
+              style={{ fontFamily: 'var(--font-primary)', color: 'var(--text-primary)' }}
             >
               {mode.name}
             </h1>
 
-            <p className="text-sm text-white/40 leading-relaxed">
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
               {mode.description}
             </p>
 
-            {/* Meta chips */}
-            <div className="flex items-center gap-3 mt-4">
-              <span
-                className="text-[0.5rem] font-bold uppercase tracking-[0.15em] px-3 py-1"
-                style={{
-                  border: `1px solid ${accent}40`,
-                  color: accent,
-                  background: `${accent}08`,
-                }}
-              >
-                {mode.playerCount}
-              </span>
-              <span
-                className="text-[0.5rem] font-bold uppercase tracking-[0.15em] px-3 py-1"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.4)',
-                }}
-              >
+            <div className="flex items-center gap-2 mt-4">
+              <span className="pill pill-accent">{mode.playerCount}</span>
+              <span className="pill" style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-default)',
+                color: 'var(--text-tertiary)',
+              }}>
                 ~{mode.avgDuration}
               </span>
             </div>
           </div>
 
-          {/* Rules section */}
+          {/* Rules */}
           <div className="px-6 py-5">
             <h2
-              className="text-[0.6rem] font-bold uppercase tracking-[0.25em] mb-4"
-              style={{ color: `${accent}99`, fontFamily: 'var(--font-display)' }}
+              className="text-xs font-semibold mb-4"
+              style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-primary)' }}
             >
-              Rules of Engagement
+              How to Play
             </h2>
 
             <ol className="space-y-3">
@@ -127,69 +107,117 @@ export default function ModeDetail() {
                   className="flex items-start gap-3"
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + i * 0.08 }}
+                  transition={{ delay: 0.2 + i * 0.06 }}
                 >
                   <span
-                    className="text-[0.55rem] font-black tabular-nums mt-0.5 shrink-0 w-5 h-5 flex items-center justify-center"
+                    className="text-xs font-bold mt-0.5 shrink-0 w-5 h-5 flex items-center justify-center"
                     style={{
                       color: accent,
-                      border: `1px solid ${accent}30`,
-                      fontFamily: 'var(--font-display)',
+                      background: `${accent}12`,
+                      borderRadius: 'var(--radius-xs)',
+                      fontFamily: 'var(--font-primary)',
                     }}
                   >
                     {i + 1}
                   </span>
-                  <span className="text-xs text-white/50 leading-relaxed">
+                  <span className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                     {rule}
                   </span>
                 </motion.li>
               ))}
             </ol>
           </div>
-
-          {/* Corner accents */}
-          <div
-            className="absolute top-0 right-0 w-6 h-6"
-            style={{ background: `linear-gradient(225deg, ${accent}20, transparent 50%)` }}
-          />
-          <div
-            className="absolute bottom-0 left-0 w-6 h-6"
-            style={{ background: `linear-gradient(45deg, ${accent}20, transparent 50%)` }}
-          />
         </motion.div>
 
-        {/* Find Match CTA */}
+        {/* Action Buttons */}
         <motion.div
-          className="mt-8 flex flex-col items-center gap-4"
+          className="flex flex-col gap-3"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
         >
+          {/* Play Offline */}
           <motion.button
-            className="w-full max-w-sm py-4 text-sm font-black uppercase tracking-[0.2em] cursor-pointer"
+            className="group w-full flex items-center gap-4 p-5 text-left cursor-pointer outline-none"
             style={{
-              fontFamily: 'var(--font-display)',
-              background: accent,
-              color: '#0a0a0f',
-              border: 'none',
-              boxShadow: `4px 4px 0px #fff`,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              fontFamily: 'var(--font-primary)',
             }}
             whileHover={{
-              boxShadow: `6px 6px 0px #fff, 0 0 30px ${accent}40`,
-              y: -2,
+              background: 'var(--bg-card-hover)',
+              borderColor: 'var(--border-default)',
+              y: -1,
             }}
-            whileTap={{ scale: 0.97, boxShadow: `2px 2px 0px #fff` }}
-            onClick={() => navigate(`/play/matchmaking?mode=${modeId}`)}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => navigate(`/play/game/offline-${Date.now().toString(36)}?mode=${modeId}`)}
           >
-            Find Match
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                background: 'rgba(78, 205, 196, 0.1)',
+                border: '1px solid rgba(78, 205, 196, 0.2)',
+              }}
+            >
+              <span className="text-lg">🧩</span>
+            </div>
+            <div>
+              <span className="text-sm font-bold block" style={{ color: 'var(--text-primary)' }}>
+                Play Offline
+              </span>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                Solo mode • No entry fee
+              </span>
+            </div>
+            <span className="ml-auto text-base opacity-0 group-hover:opacity-40 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+              →
+            </span>
           </motion.button>
 
-          <button
-            className="text-[0.55rem] uppercase tracking-[0.2em] text-white/20 hover:text-white/40 transition-colors"
-            onClick={() => navigate('/play')}
+          {/* Play PvP */}
+          <motion.button
+            className="group w-full flex items-center gap-4 p-5 text-left cursor-pointer outline-none"
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
+              fontFamily: 'var(--font-primary)',
+            }}
+            whileHover={{
+              background: 'var(--bg-card-hover)',
+              borderColor: 'var(--border-default)',
+              y: -1,
+            }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => navigate(`/play/matchmaking?mode=${modeId}`)}
           >
-            Cancel
-          </button>
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                background: 'rgba(108, 99, 255, 0.1)',
+                border: '1px solid rgba(108, 99, 255, 0.2)',
+              }}
+            >
+              <span className="text-lg">⚡</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                  Play PvP
+                </span>
+                <span className="pill pill-accent" style={{ fontSize: '0.55rem', padding: '2px 6px' }}>
+                  1v1
+                </span>
+              </div>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                Search for opponent • Entry: {entryFee} coins
+              </span>
+            </div>
+            <span className="ml-auto text-base opacity-0 group-hover:opacity-40 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+              →
+            </span>
+          </motion.button>
         </motion.div>
       </div>
     </div>

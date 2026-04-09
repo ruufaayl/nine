@@ -47,7 +47,7 @@ export default function Splash() {
         {/* Outer ring — draws in */}
         <motion.div
           className="absolute w-40 h-40 rounded-full"
-          style={{ border: '2px solid var(--neon-magenta)' }}
+          style={{ border: '2px solid var(--accent-primary)' }}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 0.15 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -65,7 +65,7 @@ export default function Splash() {
         {/* NINE wordmark */}
         <motion.h1
           className="text-6xl sm:text-7xl font-black tracking-[-0.02em] text-white relative z-10"
-          style={{ fontFamily: 'var(--font-display)' }}
+          style={{ fontFamily: 'var(--font-primary)' }}
           initial={{ opacity: 0, scale: 0.7, filter: 'blur(12px)' }}
           animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -78,7 +78,7 @@ export default function Splash() {
           {(phase === 'tagline' || phase === 'routing') && (
             <motion.p
               className="text-[0.5rem] uppercase tracking-[0.5em] text-white/25"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
@@ -92,7 +92,7 @@ export default function Splash() {
         {/* Scan line */}
         <motion.div
           className="absolute left-1/2 -translate-x-1/2 w-32 h-px"
-          style={{ background: 'var(--neon-magenta)' }}
+          style={{ background: 'var(--accent-primary)' }}
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: [0, 0.5, 0] }}
           transition={{ duration: 1.4, delay: 0.3, ease: 'easeInOut' }}
@@ -109,7 +109,7 @@ export default function Splash() {
       >
         <motion.div
           className="h-full"
-          style={{ background: 'var(--neon-magenta)' }}
+          style={{ background: 'var(--accent-primary)' }}
           initial={{ scaleX: 0, transformOrigin: 'left' }}
           animate={{ scaleX: 1 }}
           transition={{ duration: REVEAL_MS / 1000, ease: 'easeInOut' }}

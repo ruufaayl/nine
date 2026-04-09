@@ -70,7 +70,7 @@ export default function EditProfile() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -94,7 +94,7 @@ export default function EditProfile() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)', color: PURPLE }}
+            style={{ fontFamily: 'var(--font-primary)', color: PURPLE }}
           >
             Edit Profile
           </h1>
@@ -115,9 +115,9 @@ export default function EditProfile() {
               <motion.div
                 className="flex flex-col items-center gap-3 py-6"
                 style={{
-                  background: '#0c0c14',
+                  background: 'var(--bg-surface)',
                   border: `2px solid ${PURPLE}`,
-                  boxShadow: `6px 6px 0px ${PURPLE}`,
+                  boxShadow: 'var(--shadow-lg)',
                 }}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -125,7 +125,7 @@ export default function EditProfile() {
               >
                 <motion.div
                   className="w-16 h-16 flex items-center justify-center"
-                  style={{ border: `3px solid ${PURPLE}` }}
+                  style={{ border: `2px solid ${PURPLE}` }}
                   key={avatar}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
@@ -135,7 +135,7 @@ export default function EditProfile() {
                 </motion.div>
                 <span
                   className="text-sm font-black uppercase tracking-[0.1em]"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  style={{ fontFamily: 'var(--font-primary)' }}
                 >
                   {username.toUpperCase() || 'OPERATIVE'}
                 </span>
@@ -149,7 +149,7 @@ export default function EditProfile() {
               >
                 <label
                   className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-2 block"
-                  style={{ fontFamily: 'var(--font-display)', color: `${PURPLE}99` }}
+                  style={{ fontFamily: 'var(--font-primary)', color: `${PURPLE}99` }}
                 >
                   Callsign
                 </label>
@@ -160,10 +160,10 @@ export default function EditProfile() {
                   maxLength={16}
                   className="w-full px-4 py-3 text-sm font-bold uppercase tracking-[0.1em] bg-transparent outline-none"
                   style={{
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-primary)',
                     color: 'rgba(255,255,255,0.7)',
                     border: `2px solid ${error ? '#ff6b6b' : 'rgba(255,255,255,0.1)'}`,
-                    boxShadow: error ? '3px 3px 0px #ff6b6b40' : '3px 3px 0px rgba(255,255,255,0.03)',
+                    boxShadow: error ? 'var(--shadow-sm)' : 'var(--shadow-sm)',
                   }}
                   placeholder="ENTER CALLSIGN"
                 />
@@ -190,7 +190,7 @@ export default function EditProfile() {
               >
                 <label
                   className="text-[0.55rem] font-bold uppercase tracking-[0.25em] mb-3 block"
-                  style={{ fontFamily: 'var(--font-display)', color: `${PURPLE}99` }}
+                  style={{ fontFamily: 'var(--font-primary)', color: `${PURPLE}99` }}
                 >
                   Avatar
                 </label>
@@ -203,9 +203,9 @@ export default function EditProfile() {
                         onClick={() => setAvatar(a.id)}
                         className="flex flex-col items-center gap-2 py-4 cursor-pointer"
                         style={{
-                          background: '#0c0c14',
+                          background: 'var(--bg-surface)',
                           border: `2px solid ${active ? PURPLE : 'rgba(255,255,255,0.06)'}`,
-                          boxShadow: active ? `3px 3px 0px ${PURPLE}` : 'none',
+                          boxShadow: active ? 'var(--shadow-md)' : 'none',
                           transition: 'border-color 0.15s, box-shadow 0.15s',
                         }}
                         whileTap={{ scale: 0.97 }}
@@ -219,7 +219,7 @@ export default function EditProfile() {
                         <span
                           className="text-[0.45rem] font-bold uppercase tracking-[0.1em]"
                           style={{
-                            fontFamily: 'var(--font-display)',
+                            fontFamily: 'var(--font-primary)',
                             color: active ? PURPLE : 'rgba(255,255,255,0.2)',
                           }}
                         >
@@ -236,15 +236,15 @@ export default function EditProfile() {
                 onClick={handleSave}
                 className="w-full py-4 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: 'var(--font-primary)',
                   background: PURPLE,
-                  color: '#0a0a0f',
-                  boxShadow: '4px 4px 0px #fff',
+                  color: 'var(--bg-primary)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+                whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
                 Save Changes
@@ -268,7 +268,7 @@ export default function EditProfile() {
               </motion.span>
               <h2
                 className="text-xl font-black uppercase tracking-[0.15em]"
-                style={{ fontFamily: 'var(--font-display)', color: PURPLE }}
+                style={{ fontFamily: 'var(--font-primary)', color: PURPLE }}
               >
                 Profile Updated
               </h2>

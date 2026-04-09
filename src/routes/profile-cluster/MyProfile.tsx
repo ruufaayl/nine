@@ -127,7 +127,7 @@ export default function MyProfile() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -136,9 +136,9 @@ export default function MyProfile() {
         <motion.div
           className="relative overflow-hidden mb-6"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: `2px solid ${rankColor}`,
-            boxShadow: `6px 6px 0px ${rankColor}`,
+            boxShadow: 'var(--shadow-lg)',
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -155,7 +155,7 @@ export default function MyProfile() {
             <motion.div
               className="w-20 h-20 flex items-center justify-center mb-4"
               style={{
-                border: `3px solid ${rankColor}`,
+                border: `2px solid ${rankColor}`,
                 boxShadow: `0 0 30px ${rankColor}20`,
               }}
               initial={{ scale: 0.8, opacity: 0 }}
@@ -167,7 +167,7 @@ export default function MyProfile() {
 
             <h1
               className="text-xl font-black uppercase tracking-[0.12em] mb-1"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               {displayName}
             </h1>
@@ -206,7 +206,7 @@ export default function MyProfile() {
                 </span>
                 <span
                   className="text-[0.5rem] font-bold tabular-nums"
-                  style={{ fontFamily: 'var(--font-display)', color: rankColor }}
+                  style={{ fontFamily: 'var(--font-primary)', color: rankColor }}
                 >
                   {xp.toLocaleString()} XP
                 </span>
@@ -255,7 +255,7 @@ export default function MyProfile() {
               key={stat.label}
               className="flex flex-col items-center gap-1 py-4"
               style={{
-                background: '#0c0c14',
+                background: 'var(--bg-surface)',
                 border: '1px solid rgba(255,255,255,0.04)',
               }}
               initial={{ opacity: 0, y: 8 }}
@@ -264,7 +264,7 @@ export default function MyProfile() {
             >
               <span
                 className="text-base font-black tabular-nums"
-                style={{ fontFamily: 'var(--font-display)', color: 'var(--cyber-cyan)' }}
+                style={{ fontFamily: 'var(--font-primary)', color: 'var(--accent-secondary)' }}
               >
                 {stat.value}
               </span>
@@ -278,16 +278,16 @@ export default function MyProfile() {
         {/* Recent Games */}
         <motion.div
           className="relative overflow-hidden mb-6"
-          style={{ background: '#0c0c14', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.06)' }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
           <div className="flex items-center gap-2 px-5 py-3 border-b border-white/[0.04]">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--laser-orange)' }} />
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--accent-warning)' }} />
             <h3
               className="text-[0.55rem] font-bold uppercase tracking-[0.2em] text-white/40"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               Recent Games
             </h3>
@@ -309,8 +309,8 @@ export default function MyProfile() {
                 <span
                   className="w-6 h-6 flex items-center justify-center text-[0.55rem] font-black shrink-0"
                   style={{
-                    fontFamily: 'var(--font-display)',
-                    color: 'var(--electric-lime)',
+                    fontFamily: 'var(--font-primary)',
+                    color: 'var(--accent-success)',
                     background: 'rgba(170,255,0,0.06)',
                     border: '1px solid rgba(170,255,0,0.15)',
                   }}
@@ -320,7 +320,7 @@ export default function MyProfile() {
                 <span className="text-xs text-white/50 flex-1">
                   {MODE_NAMES[g.modeId] ?? g.modeId}
                 </span>
-                <span className="text-[0.5rem] tabular-nums text-white/25" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="text-[0.5rem] tabular-nums text-white/25" style={{ fontFamily: 'var(--font-primary)' }}>
                   {g.score.toLocaleString()}
                 </span>
                 <span className="text-[0.45rem] text-white/15">{formatTime(g.timeMs)}</span>
@@ -340,10 +340,10 @@ export default function MyProfile() {
           <motion.button
             className="flex-1 py-3 text-[0.6rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: 'rgba(255,255,255,0.4)',
               border: '2px solid rgba(255,255,255,0.1)',
-              boxShadow: '4px 4px 0px rgba(255,255,255,0.04)',
+              boxShadow: 'var(--shadow-sm)',
             }}
             whileHover={{ borderColor: 'rgba(255,255,255,0.25)' }}
             whileTap={{ scale: 0.97 }}
@@ -355,10 +355,10 @@ export default function MyProfile() {
           <motion.button
             className="flex-1 py-3 text-[0.6rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: 'rgba(255,255,255,0.4)',
               border: '2px solid rgba(255,255,255,0.1)',
-              boxShadow: '4px 4px 0px rgba(255,255,255,0.04)',
+              boxShadow: 'var(--shadow-sm)',
             }}
             whileHover={{ borderColor: 'rgba(255,255,255,0.25)' }}
             whileTap={{ scale: 0.97 }}
@@ -370,10 +370,10 @@ export default function MyProfile() {
           <motion.button
             className="flex-1 py-3 text-[0.6rem] font-bold uppercase tracking-[0.15em] cursor-pointer"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: '#ff6b6b',
               border: '2px solid rgba(255,107,107,0.15)',
-              boxShadow: '4px 4px 0px rgba(255,107,107,0.06)',
+              boxShadow: 'var(--shadow-sm)',
             }}
             whileHover={{ borderColor: 'rgba(255,107,107,0.4)' }}
             whileTap={{ scale: 0.97 }}

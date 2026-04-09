@@ -1,233 +1,229 @@
 // ──────────────────────────────────────────────
-// NINE — Prime Grid Hub (Solo / PvP Selector)
+// NINE — Prime Grid (Mode Entry)
+// Offline + PvP flow with difficulty + entry fee
 // ──────────────────────────────────────────────
 
-import { useCallback, useState } from 'react';
-import { motion, type Variants } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { GameScreen } from '../Game/GameScreen';
-import { RaceMode } from './RaceMode';
+import { PrimeGridPvP } from '../Game/PrimeGridPvP';
+import { ENTRY_FEES } from '../../lib/economy';
+import type { Difficulty } from '../../types/game';
 
 // ─── Types ──────────────────────────────────
 
-type Variant = 'menu' | 'solo-classic' | 'pvp-race';
+type Phase = 'select' | 'offline' | 'pvp-search' | 'pvp-game';
 
 interface PrimeGridProps {
   onExit: () => void;
 }
 
-// ─── Animation Variants ─────────────────────
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.12,
-      duration: 0.5,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
-    },
-  }),
-};
-
-// ─── Protocol Card ──────────────────────────
-
-interface ProtocolCardProps {
-  title: string;
-  subtitle: string;
-  description: string;
-  accent: string;
-  glyph: string;
-  index: number;
-  tag?: string;
-  onClick: () => void;
-}
-
-function ProtocolCard({
-  title,
-  subtitle,
-  description,
-  accent,
-  glyph,
-  index,
-  tag,
-  onClick,
-}: ProtocolCardProps) {
-  return (
-    <motion.button
-      className={clsx(
-        'group relative flex flex-col items-start gap-4',
-        'rounded-2xl p-7 text-left w-full max-w-sm',
-        'border border-white/[0.06]',
-        'bg-white/[0.02] backdrop-blur-sm',
-        'cursor-pointer outline-none',
-        'focus-visible:ring-1 focus-visible:ring-white/20',
-      )}
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-      whileHover={{
-        scale: 1.03,
-        borderColor: 'rgba(255,255,255,0.25)',
-        transition: { type: 'spring', stiffness: 400, damping: 25 },
-      }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-    >
-      {/* Accent glow */}
-      <div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-[0.08] transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(ellipse at 30% 0%, ${accent}, transparent 70%)`,
-        }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col gap-3 w-full">
-        {/* Top row: glyph + tag */}
-        <div className="flex items-center justify-between w-full">
-          <span className="text-2xl opacity-50" style={{ color: accent }}>
-            {glyph}
-          </span>
-          {tag && (
-            <span
-              className="text-[0.5rem] uppercase tracking-[0.2em] font-bold px-2 py-0.5 rounded-full"
-              style={{
-                color: accent,
-                background: `${accent}15`,
-                border: `1px solid ${accent}30`,
-              }}
-            >
-              {tag}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-black tracking-wide text-white/90 group-hover:text-white transition-colors">
-            {title}
-          </h3>
-          <span
-            className="text-[0.6rem] uppercase tracking-[0.2em] font-semibold"
-            style={{ color: accent, opacity: 0.6 }}
-          >
-            {subtitle}
-          </span>
-        </div>
-
-        <p className="text-[0.75rem] leading-relaxed text-white/30 group-hover:text-white/50 transition-colors">
-          {description}
-        </p>
-      </div>
-
-      {/* Bottom accent line */}
-      <div
-        className="absolute bottom-0 left-6 right-6 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{ background: accent }}
-      />
-    </motion.button>
-  );
-}
+const DIFFICULTIES: { key: Difficulty; label: string; desc: string }[] = [
+  { key: 'easy',   label: 'Easy',   desc: '36-40 empty cells' },
+  { key: 'medium', label: 'Medium', desc: '41-48 empty cells' },
+  { key: 'hard',   label: 'Hard',   desc: '49-53 empty cells' },
+  { key: 'expert', label: 'Expert', desc: '54-58 empty cells' },
+];
 
 // ─── Main Component ─────────────────────────
 
 export function PrimeGrid({ onExit }: PrimeGridProps) {
-  const [variant, setVariant] = useState<Variant>('menu');
+  const [phase, setPhase] = useState<Phase>('select');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
 
-  const goToMenu = useCallback(() => setVariant('menu'), []);
+  const goToSelect = useCallback(() => setPhase('select'), []);
 
-  // ── Solo Mode ──
-  if (variant === 'solo-classic') {
-    return (
-      <GameScreen
-        difficulty="medium"
-        characterId="jade-serpent"
-        mode="classic"
-        onExit={goToMenu}
-      />
-    );
+  // ── Offline Game ──
+  if (phase === 'offline') {
+    return <GameScreen difficulty={difficulty} onExit={goToSelect} />;
   }
 
-  // ── PvP Race ──
-  if (variant === 'pvp-race') {
-    return <RaceMode onExit={goToMenu} />;
+  // ── PvP Game (handles full lifecycle: search → found → ready → countdown → play → result) ──
+  if (phase === 'pvp-game') {
+    return <PrimeGridPvP difficulty={difficulty} onExit={goToSelect} />;
   }
 
-  // ── Menu ──
+  // ── Selection Screen ──
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-[#0a0a0f] text-white overflow-hidden px-5">
-      {/* Background grid */}
-      <svg
-        className="fixed inset-0 w-full h-full pointer-events-none z-0"
-        aria-hidden="true"
+    <div
+      className="relative flex flex-col items-center min-h-screen px-5 py-8"
+      style={{ background: 'var(--bg-primary)' }}
+    >
+      {/* Header */}
+      <motion.header
+        className="flex flex-col items-center gap-2 mb-10 select-none"
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
-        <defs>
-          <pattern id="pg-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#pg-grid)" />
-      </svg>
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center gap-10 max-w-2xl w-full">
-        {/* Header */}
-        <motion.header
-          className="flex flex-col items-center gap-3 select-none"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+        <h1
+          className="text-3xl font-extrabold tracking-tight"
+          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-primary)' }}
         >
-          <motion.h1
-            className="text-5xl sm:text-6xl font-black tracking-tight text-white"
-            animate={{ opacity: [0.85, 1, 0.85] }}
-            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-          >
-            PRIME GRID
-          </motion.h1>
-          <p className="text-[0.6rem] uppercase tracking-[0.3em] text-white/25">
-            Select your protocol
-          </p>
-          <div className="w-12 h-px bg-white/10 mt-1" />
-        </motion.header>
+          Prime Grid
+        </h1>
+        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+          Classic 9×9 Sudoku
+        </p>
+      </motion.header>
 
-        {/* Protocol Cards */}
-        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-          <ProtocolCard
-            title="Solo Protocol"
-            subtitle="Classic 9×9"
-            description="Solve the grid at your own pace. No pressure, no opponent — pure logic against the numbers."
-            accent="rgba(96, 165, 250, 0.8)"
-            glyph="◈"
-            index={0}
-            onClick={() => setVariant('solo-classic')}
-          />
-          <ProtocolCard
-            title="Live Match"
-            subtitle="1v1 Race"
-            description="Connect to the Valkey matchmaker. First to solve wins. You'll see your opponent's ghost progress in real time."
-            accent="rgba(168, 85, 247, 0.8)"
-            glyph="⚡"
-            index={1}
-            tag="PvP"
-            onClick={() => setVariant('pvp-race')}
-          />
+      {/* Difficulty Selector */}
+      <motion.div
+        className="w-full max-w-md mb-8"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+      >
+        <p
+          className="text-xs font-semibold mb-3"
+          style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-primary)' }}
+        >
+          Difficulty
+        </p>
+        <div className="grid grid-cols-4 gap-2">
+          {DIFFICULTIES.map((d) => {
+            const isActive = difficulty === d.key;
+            return (
+              <motion.button
+                key={d.key}
+                className={clsx(
+                  'flex flex-col items-center gap-1 py-3 px-2',
+                  'outline-none cursor-pointer select-none',
+                  'transition-all duration-200',
+                )}
+                style={{
+                  fontFamily: 'var(--font-primary)',
+                  background: isActive ? 'rgba(108, 99, 255, 0.12)' : 'var(--bg-card)',
+                  border: isActive
+                    ? '1px solid rgba(108, 99, 255, 0.3)'
+                    : '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setDifficulty(d.key)}
+              >
+                <span className="text-sm font-semibold">{d.label}</span>
+              </motion.button>
+            );
+          })}
         </div>
+      </motion.div>
 
-        {/* Back */}
+      {/* Mode Selection Cards */}
+      <motion.div
+        className="flex flex-col gap-3 w-full max-w-md"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >
+        {/* Play Offline */}
         <motion.button
-          className="text-[0.6rem] uppercase tracking-widest text-white/20 hover:text-white/40 transition-colors"
-          whileTap={{ scale: 0.95 }}
-          onClick={onExit}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          className={clsx(
+            'group relative flex items-center gap-4',
+            'w-full p-5 text-left',
+            'outline-none cursor-pointer',
+          )}
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            fontFamily: 'var(--font-primary)',
+          }}
+          whileHover={{
+            background: 'var(--bg-card-hover)',
+            borderColor: 'var(--border-default)',
+            y: -1,
+          }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => setPhase('offline')}
         >
-          ← Back to Grand Lobby
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+            style={{
+              background: 'rgba(78, 205, 196, 0.1)',
+              border: '1px solid rgba(78, 205, 196, 0.2)',
+            }}
+          >
+            <span className="text-xl">🧩</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+              Play Offline
+            </span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              Solo mode — solve at your own pace. No entry fee.
+            </span>
+          </div>
+          <span className="ml-auto text-lg opacity-0 group-hover:opacity-50 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+            →
+          </span>
         </motion.button>
-      </div>
+
+        {/* Play PvP */}
+        <motion.button
+          className={clsx(
+            'group relative flex items-center gap-4',
+            'w-full p-5 text-left',
+            'outline-none cursor-pointer',
+          )}
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            fontFamily: 'var(--font-primary)',
+          }}
+          whileHover={{
+            background: 'var(--bg-card-hover)',
+            borderColor: 'var(--border-default)',
+            y: -1,
+          }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => setPhase('pvp-search')}
+        >
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+            style={{
+              background: 'rgba(108, 99, 255, 0.1)',
+              border: '1px solid rgba(108, 99, 255, 0.2)',
+            }}
+          >
+            <span className="text-xl">⚡</span>
+          </div>
+          <div className="flex flex-col gap-0.5 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                Play PvP
+              </span>
+              <span className="pill pill-accent" style={{ fontSize: '0.6rem', padding: '2px 8px' }}>
+                1v1
+              </span>
+            </div>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              Search for an opponent. Entry: {ENTRY_FEES[difficulty]} coins
+            </span>
+          </div>
+          <span className="ml-auto text-lg opacity-0 group-hover:opacity-50 transition-opacity" style={{ color: 'var(--text-secondary)' }}>
+            →
+          </span>
+        </motion.button>
+      </motion.div>
+
+      {/* Back */}
+      <motion.button
+        className="mt-8 text-sm font-medium cursor-pointer"
+        style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-primary)' }}
+        whileHover={{ color: 'var(--text-secondary)' }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onExit}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        ← Back
+      </motion.button>
     </div>
   );
 }

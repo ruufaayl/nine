@@ -38,9 +38,9 @@ const INITIAL_NOTIFS: Notification[] = [
 
 const TYPE_CONFIG: Record<NotifType, { icon: string; accent: string }> = {
   friend_request: { icon: '⟁', accent: SOCIAL },
-  game_invite:    { icon: '◈', accent: 'var(--electric-lime)' },
-  system:         { icon: '⧖', accent: 'var(--laser-orange)' },
-  result:         { icon: '⚡', accent: 'var(--neon-magenta)' },
+  game_invite:    { icon: '◈', accent: 'var(--accent-success)' },
+  system:         { icon: '⧖', accent: 'var(--accent-warning)' },
+  result:         { icon: '⚡', accent: 'var(--accent-primary)' },
 };
 
 // ─── Tabs ───────────────────────────────────
@@ -91,7 +91,7 @@ export default function Notifications() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #091a1f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -105,7 +105,7 @@ export default function Notifications() {
           <div>
             <h1
               className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{ fontFamily: 'var(--font-primary)' }}
             >
               Notifications
             </h1>
@@ -146,9 +146,9 @@ export default function Notifications() {
               onClick={() => setTab(t.key)}
               className="text-[0.55rem] font-bold uppercase tracking-[0.15em] px-4 py-2 cursor-pointer transition-all duration-150"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 background: tab === t.key ? SOCIAL : 'transparent',
-                color: tab === t.key ? '#0a0a0f' : 'rgba(255,255,255,0.3)',
+                color: tab === t.key ? 'var(--bg-primary)' : 'rgba(255,255,255,0.3)',
                 border: `1px solid ${tab === t.key ? SOCIAL : 'rgba(255,255,255,0.08)'}`,
               }}
             >
@@ -175,7 +175,7 @@ export default function Notifications() {
                     key={notif.id}
                     className="relative flex items-start gap-4 px-5 py-4 group"
                     style={{
-                      background: '#0c0c14',
+                      background: 'var(--bg-surface)',
                       border: `1px solid ${notif.read ? 'rgba(255,255,255,0.04)' : `${cfg.accent}25`}`,
                       boxShadow: notif.read ? 'none' : `0 0 12px ${cfg.accent}08`,
                     }}

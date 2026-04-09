@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────────
 // S-27 — Stats & History
 // Full match history with filters — real data
-// Cyberpunk data-readout styling (monospaced)
+// Clean data-readout styling (Manrope)
 // ──────────────────────────────────────────────
 
 import { useState, useEffect, useMemo } from 'react';
@@ -122,7 +122,7 @@ export default function StatsHistory() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -146,7 +146,7 @@ export default function StatsHistory() {
         >
           <h1
             className="text-2xl font-black uppercase tracking-[0.15em] mb-1"
-            style={{ fontFamily: 'var(--font-display)', color: PURPLE }}
+            style={{ fontFamily: 'var(--font-primary)', color: PURPLE }}
           >
             Stats & History
           </h1>
@@ -168,9 +168,9 @@ export default function StatsHistory() {
             <motion.div
               className="mb-6 px-5 py-4"
               style={{
-                background: '#0c0c14',
+                background: 'var(--bg-surface)',
                 border: `2px solid ${PURPLE}`,
-                boxShadow: `4px 4px 0px ${PURPLE}`,
+                boxShadow: 'var(--shadow-md)',
               }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -188,7 +188,7 @@ export default function StatsHistory() {
                   <div key={s.label} className="text-center">
                     <span
                       className="text-base font-black tabular-nums block"
-                      style={{ fontFamily: '"DM Mono", "Fira Code", monospace', color: s.color }}
+                      style={{ fontFamily: 'var(--font-primary)', color: s.color }}
                     >
                       {s.value}
                     </span>
@@ -212,8 +212,8 @@ export default function StatsHistory() {
                 onChange={(e) => setModeFilter(e.target.value)}
                 className="text-[0.5rem] font-bold uppercase tracking-[0.1em] px-3 py-1.5 cursor-pointer appearance-none"
                 style={{
-                  fontFamily: 'var(--font-display)',
-                  background: '#0c0c14',
+                  fontFamily: 'var(--font-primary)',
+                  background: 'var(--bg-surface)',
                   color: modeFilter === 'all' ? 'rgba(255,255,255,0.3)' : PURPLE,
                   border: `1px solid ${modeFilter === 'all' ? 'rgba(255,255,255,0.08)' : PURPLE}`,
                   outline: 'none',
@@ -234,9 +234,9 @@ export default function StatsHistory() {
                     onClick={() => setResultFilter(r)}
                     className="text-[0.5rem] font-bold uppercase tracking-[0.1em] px-3 py-1.5 cursor-pointer"
                     style={{
-                      fontFamily: 'var(--font-display)',
+                      fontFamily: 'var(--font-primary)',
                       background: active ? (r === 'all' ? PURPLE : resultColor(r)) : 'transparent',
-                      color: active ? '#0a0a0f' : 'rgba(255,255,255,0.25)',
+                      color: active ? 'var(--bg-primary)' : 'rgba(255,255,255,0.25)',
                       border: `1px solid ${active ? (r === 'all' ? PURPLE : resultColor(r)) : 'rgba(255,255,255,0.06)'}`,
                     }}
                   >
@@ -250,7 +250,7 @@ export default function StatsHistory() {
             <div
               className="grid items-center gap-2 px-4 py-2 text-[0.4rem] uppercase tracking-[0.2em] text-white/15"
               style={{
-                fontFamily: '"DM Mono", "Fira Code", monospace',
+                fontFamily: 'var(--font-primary)',
                 gridTemplateColumns: '2rem 1fr 5rem 3.5rem 3rem 4rem',
                 borderBottom: '1px solid rgba(255,255,255,0.04)',
               }}
@@ -276,9 +276,9 @@ export default function StatsHistory() {
                   onClick={() => navigate(`/play/review/${match.id}`)}
                   className="grid items-center gap-2 px-4 py-3 text-left cursor-pointer w-full"
                   style={{
-                    fontFamily: '"DM Mono", "Fira Code", monospace',
+                    fontFamily: 'var(--font-primary)',
                     gridTemplateColumns: '2rem 1fr 5rem 3.5rem 3rem 4rem',
-                    background: i % 2 === 0 ? '#0c0c14' : '#0a0a12',
+                    background: i % 2 === 0 ? 'var(--bg-surface)' : 'var(--bg-elevated)',
                     borderBottom: '1px solid rgba(255,255,255,0.02)',
                   }}
                   initial={{ opacity: 0, x: -6 }}
@@ -317,7 +317,7 @@ export default function StatsHistory() {
             <div className="mt-4 text-center">
               <p
                 className="text-[0.4rem] uppercase tracking-[0.2em] text-white/10"
-                style={{ fontFamily: '"DM Mono", "Fira Code", monospace' }}
+                style={{ fontFamily: 'var(--font-primary)' }}
               >
                 showing {filtered.length} of {matches.length} records
               </p>

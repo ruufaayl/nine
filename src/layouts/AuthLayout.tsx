@@ -1,5 +1,6 @@
 // ──────────────────────────────────────────────
 // NINE — Auth Layout (no navigation visible)
+// Clean minimalist — Manrope liquid design
 // ──────────────────────────────────────────────
 
 import { Outlet } from 'react-router';
@@ -7,13 +8,16 @@ import { motion } from 'framer-motion';
 
 export default function AuthLayout() {
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: 'var(--bg-deep-violet)' }}>
-      {/* Ambient glow */}
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{ background: 'var(--bg-primary)' }}
+    >
+      {/* Ambient soft glow */}
       <div
         className="pointer-events-none fixed inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 60% 40% at 50% 0%, color-mix(in srgb, var(--neon-magenta) 6%, transparent), transparent)',
+            'radial-gradient(ellipse 60% 40% at 50% 0%, color-mix(in srgb, var(--accent-primary) 5%, transparent), transparent)',
         }}
       />
 
@@ -25,8 +29,11 @@ export default function AuthLayout() {
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <span
-          className="text-lg font-black tracking-tighter text-white/60"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-lg font-extrabold tracking-tight"
+          style={{
+            fontFamily: 'var(--font-primary)',
+            color: 'var(--text-secondary)',
+          }}
         >
           NINE
         </span>

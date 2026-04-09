@@ -1,8 +1,10 @@
 // ──────────────────────────────────────────────
 // NINE — Shattered Grid (Polyomino) UI Component
+// Drag fragments from the dock onto the board.
+// Best-of-5 rounds — fastest total time wins.
 // ──────────────────────────────────────────────
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion, type PanInfo, type Variants } from 'framer-motion';
 import clsx from 'clsx';
 import { useShatteredGrid } from '../../hooks/useShatteredGrid';
@@ -16,8 +18,8 @@ interface ShatteredGridProps {
 
 // ─── Constants ──────────────────────────────
 
-const CELL_SIZE = 56; // px per grid cell
-const SNAP_THRESHOLD = CELL_SIZE * 0.6;
+const CELL_SIZE = 56;
+const TOTAL_ROUNDS = 5;
 
 const FRAGMENT_COLORS = [
   'rgba(74,144,226,0.25)',
@@ -54,11 +56,13 @@ interface BoardProps {
   height: number;
   placedFragments: { frag: GridFragment; index: number }[];
   flashFragmentIndex: number | null;
+  boardRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function AssemblyBoard({ width, height, placedFragments, flashFragmentIndex }: BoardProps) {
+function AssemblyBoard({ width, height, placedFragments, flashFragmentIndex, boardRef }: BoardProps) {
   return (
     <div
+      ref={boardRef}
       className="relative rounded-lg border border-white/[0.06] overflow-hidden"
       style={{
         width: width * CELL_SIZE,
@@ -104,7 +108,6 @@ function AssemblyBoard({ width, height, placedFragments, flashFragmentIndex }: B
           >
             {frag.values[ci]}
 
-            {/* Flash overlay on successful snap */}
             {flashFragmentIndex === index && (
               <motion.div
                 className="absolute inset-0 rounded-[2px]"
@@ -129,6 +132,7 @@ interface DragFragmentProps {
   isSelected: boolean;
   gridWidth: number;
   gridHeight: number;
+  boardRef: React.RefObject<HTMLDivElement | null>;
   onSelect: () => void;
   onSnap: (anchorRow: number, anchorCol: number) => void;
 }
@@ -139,10 +143,12 @@ function DragFragment({
   isSelected,
   gridWidth,
   gridHeight,
+  boardRef,
   onSelect,
   onSnap,
 }: DragFragmentProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const fragRef = useRef<HTMLDivElement | null>(null);
 
   // Compute bounding box of fragment cells for rendering
   const minRow = Math.min(...frag.currentCoords.map((c) => c.row));
@@ -153,34 +159,55 @@ function DragFragment({
   const fragHeight = (maxRow - minRow + 1) * CELL_SIZE;
 
   const handleDragEnd = useCallback(
-    (e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       setIsDragging(false);
 
-      // Calculate where the anchor (first cell) would land
-      const offsetX = info.offset.x;
-      const offsetY = info.offset.y;
+      const board = boardRef.current;
+      const fragEl = fragRef.current;
+      if (!board || !fragEl) return;
 
-      // Snap to nearest grid position
+      const boardRect = board.getBoundingClientRect();
+      const fragRect = fragEl.getBoundingClientRect();
+
+      // The first cell of the fragment in the visual element is at (0,0) offset
+      // relative to the fragment's bounding box. But the first cell might not
+      // be at minRow/minCol. We need the offset of currentCoords[0] within the bbox.
       const baseCoord = frag.currentCoords[0];
-      const newCol = baseCoord.col + Math.round(offsetX / CELL_SIZE);
-      const newRow = baseCoord.row + Math.round(offsetY / CELL_SIZE);
+      const cellOffsetX = (baseCoord.col - minCol) * CELL_SIZE;
+      const cellOffsetY = (baseCoord.row - minRow) * CELL_SIZE;
 
-      // Validate within bounds
+      // Screen position of the first cell's center after drag
+      const cellCenterX = fragRect.left + cellOffsetX + CELL_SIZE / 2;
+      const cellCenterY = fragRect.top + cellOffsetY + CELL_SIZE / 2;
+
+      // Convert to grid coordinates relative to the board
+      const gridCol = Math.round((cellCenterX - boardRect.left) / CELL_SIZE - 0.5);
+      const gridRow = Math.round((cellCenterY - boardRect.top) / CELL_SIZE - 0.5);
+
+      // Validate ALL cells of the fragment would be within bounds
       const allInBounds = frag.currentCoords.every((c) => {
-        const nr = c.row - baseCoord.row + newRow;
-        const nc = c.col - baseCoord.col + newCol;
+        const nr = c.row - baseCoord.row + gridRow;
+        const nc = c.col - baseCoord.col + gridCol;
         return nr >= 0 && nr < gridHeight && nc >= 0 && nc < gridWidth;
       });
 
-      if (allInBounds && (Math.abs(offsetX) > SNAP_THRESHOLD || Math.abs(offsetY) > SNAP_THRESHOLD)) {
-        onSnap(newRow, newCol);
+      // Check the fragment is actually over the board (not just in-bounds arithmetically)
+      const overBoard =
+        cellCenterX >= boardRect.left - CELL_SIZE &&
+        cellCenterX <= boardRect.right + CELL_SIZE &&
+        cellCenterY >= boardRect.top - CELL_SIZE &&
+        cellCenterY <= boardRect.bottom + CELL_SIZE;
+
+      if (allInBounds && overBoard) {
+        onSnap(gridRow, gridCol);
       }
     },
-    [frag, gridWidth, gridHeight, onSnap],
+    [frag, gridWidth, gridHeight, boardRef, onSnap, minCol, minRow],
   );
 
   return (
     <motion.div
+      ref={fragRef}
       className={clsx(
         'relative cursor-grab active:cursor-grabbing',
         'rounded-lg',
@@ -203,12 +230,11 @@ function DragFragment({
       }}
       whileHover={{ scale: 1.02 }}
     >
-      {/* Glow when dragging */}
       {isDragging && (
         <div
           className="absolute inset-0 rounded-lg pointer-events-none"
           style={{
-            boxShadow: '0 0 20px rgba(var(--accent-rgb, 74,144,226), 0.4)',
+            boxShadow: '0 0 20px rgba(74,144,226, 0.4)',
           }}
         />
       )}
@@ -234,6 +260,16 @@ function DragFragment({
   );
 }
 
+// ─── Timer Display ──────────────────────────
+
+function formatTime(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  const centis = Math.floor((ms % 1000) / 10);
+  return `${mins}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}`;
+}
+
 // ─── Main Component ─────────────────────────
 
 export function ShatteredGrid({ onExit }: ShatteredGridProps) {
@@ -254,6 +290,55 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
     clearFlash,
     reset,
   } = useShatteredGrid(4);
+
+  const boardRef = useRef<HTMLDivElement | null>(null);
+
+  // ── Round & Timer State ──
+  const [round, setRound] = useState(1);
+  const [roundTimes, setRoundTimes] = useState<number[]>([]);
+  const [roundStartTime, setRoundStartTime] = useState<number>(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const [matchComplete, setMatchComplete] = useState(false);
+
+  // Tick timer
+  useEffect(() => {
+    if (matchComplete) return;
+    const id = setInterval(() => {
+      setElapsed(Date.now() - roundStartTime);
+    }, 33);
+    return () => clearInterval(id);
+  }, [roundStartTime, matchComplete]);
+
+  // Handle round completion
+  useEffect(() => {
+    if (!isComplete || matchComplete) return;
+
+    const roundTime = Date.now() - roundStartTime;
+    const newTimes = [...roundTimes, roundTime];
+    setRoundTimes(newTimes);
+
+    if (round >= TOTAL_ROUNDS) {
+      setMatchComplete(true);
+    }
+  }, [isComplete]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleNextRound = useCallback(() => {
+    setRound((r) => r + 1);
+    setRoundStartTime(Date.now());
+    setElapsed(0);
+    reset();
+  }, [reset]);
+
+  const handleRestart = useCallback(() => {
+    setRound(1);
+    setRoundTimes([]);
+    setRoundStartTime(Date.now());
+    setElapsed(0);
+    setMatchComplete(false);
+    reset();
+  }, [reset]);
+
+  const totalTime = roundTimes.reduce((sum, t) => sum + t, 0);
 
   const handleFragSelect = useCallback(
     (index: number) => {
@@ -277,7 +362,7 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
       {/* Header */}
       <header className="w-full max-w-2xl flex items-center justify-between px-5 pt-5 pb-3">
         <motion.button
-          className="text-[0.6rem] uppercase tracking-widest text-white/20 hover:text-white/50 transition-colors"
+          className="text-[0.6rem] uppercase tracking-widest text-white/20 hover:text-white/50 transition-colors cursor-pointer"
           whileTap={{ scale: 0.95 }}
           onClick={onExit}
         >
@@ -292,6 +377,39 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
         <span className="text-xs tabular-nums text-white/30">{moves} moves</span>
       </header>
 
+      {/* Round & Timer Bar */}
+      <div className="w-full max-w-2xl flex items-center justify-between px-5 pb-3">
+        <div className="flex items-center gap-3">
+          {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full transition-colors duration-200"
+              style={{
+                background:
+                  i < roundTimes.length
+                    ? 'var(--accent-success)'
+                    : i === round - 1
+                      ? 'var(--accent-secondary)'
+                      : 'rgba(255,255,255,0.1)',
+                boxShadow:
+                  i === round - 1 && !matchComplete
+                    ? '0 0 8px var(--accent-secondary)'
+                    : 'none',
+              }}
+            />
+          ))}
+          <span className="text-[0.5rem] uppercase tracking-widest text-white/25 ml-1">
+            Round {round}/{TOTAL_ROUNDS}
+          </span>
+        </div>
+        <span
+          className="text-sm font-black tabular-nums"
+          style={{ fontFamily: 'var(--font-primary)', color: 'var(--accent-secondary)' }}
+        >
+          {formatTime(isComplete ? (roundTimes[roundTimes.length - 1] ?? elapsed) : elapsed)}
+        </span>
+      </div>
+
       {/* Assembly Board (center) */}
       <div className="flex items-center justify-center px-5 py-6">
         <AssemblyBoard
@@ -299,6 +417,7 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
           height={gridHeight}
           placedFragments={placedFragments}
           flashFragmentIndex={flashFragmentIndex}
+          boardRef={boardRef}
         />
       </div>
 
@@ -309,7 +428,7 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
             className="text-[0.55rem] uppercase tracking-[0.25em] text-center"
             style={{ color: 'var(--color-accent)', opacity: 0.4 }}
           >
-            Drag fragments to the board
+            Drag fragments onto the board
           </span>
           <div className="flex flex-wrap gap-4 justify-center items-center min-h-[80px] p-4 rounded-xl border border-white/[0.05] bg-white/[0.02]">
             {dockFragments.length === 0 && !isComplete && (
@@ -323,6 +442,7 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
                 isSelected={selectedFragmentIndex === index}
                 gridWidth={gridWidth}
                 gridHeight={gridHeight}
+                boardRef={boardRef}
                 onSelect={() => handleFragSelect(index)}
                 onSnap={(anchorRow, anchorCol) => handleFragSnap(index, anchorRow, anchorCol)}
               />
@@ -331,26 +451,26 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
         </div>
       </div>
 
-      {/* Completion Overlay */}
+      {/* Round Complete Overlay */}
       <AnimatePresence>
-        {isComplete && (
+        {isComplete && !matchComplete && (
           <motion.div
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
           >
             <motion.div
               className="flex flex-col items-center gap-5 px-8 py-8 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md max-w-xs w-full text-center"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.3 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
             >
               <span
-                className="text-2xl font-black tracking-wide"
+                className="text-xl font-black tracking-wide uppercase"
                 style={{ color: 'var(--color-accent)' }}
               >
-                GRID REASSEMBLED
+                Round {round} Complete!
               </span>
 
               <div className="grid grid-cols-2 gap-4 w-full">
@@ -361,16 +481,80 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
                   <span className="text-[0.5rem] uppercase tracking-widest text-white/30">Moves</span>
                 </div>
                 <div className="flex flex-col items-center gap-1 py-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
-                  <span className="text-lg font-black tabular-nums" style={{ color: 'var(--color-accent)' }}>
-                    {score.toLocaleString()}
+                  <span className="text-lg font-black tabular-nums" style={{ color: 'var(--accent-secondary)' }}>
+                    {formatTime(roundTimes[roundTimes.length - 1] ?? 0)}
                   </span>
-                  <span className="text-[0.5rem] uppercase tracking-widest text-white/30">Score</span>
+                  <span className="text-[0.5rem] uppercase tracking-widest text-white/30">Time</span>
                 </div>
+              </div>
+
+              <motion.button
+                className="w-full py-3 rounded-lg text-sm font-bold cursor-pointer"
+                style={{ background: 'var(--color-accent)', color: 'var(--color-background)' }}
+                whileHover={{ scale: 1.03, opacity: 0.9 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleNextRound}
+              >
+                Round {round + 1} →
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Match Complete Overlay */}
+      <AnimatePresence>
+        {matchComplete && (
+          <motion.div
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <motion.div
+              className="flex flex-col items-center gap-5 px-8 py-8 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md max-w-sm w-full text-center"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+            >
+              <span
+                className="text-2xl font-black tracking-wide"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                MATCH COMPLETE
+              </span>
+
+              {/* Round breakdown */}
+              <div className="w-full flex flex-col gap-1">
+                {roundTimes.map((t, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.03]"
+                  >
+                    <span className="text-[0.5rem] uppercase tracking-widest text-white/30">
+                      Round {i + 1}
+                    </span>
+                    <span className="text-xs font-bold tabular-nums text-white/60">
+                      {formatTime(t)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total time */}
+              <div className="flex flex-col items-center gap-1 py-4 w-full rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <span
+                  className="text-2xl font-black tabular-nums"
+                  style={{ color: 'var(--accent-secondary)' }}
+                >
+                  {formatTime(totalTime)}
+                </span>
+                <span className="text-[0.5rem] uppercase tracking-widest text-white/30">Total Time</span>
               </div>
 
               <div className="flex gap-3 w-full mt-2">
                 <motion.button
-                  className="flex-1 py-3 rounded-lg border border-white/10 text-sm font-semibold text-white/60"
+                  className="flex-1 py-3 rounded-lg border border-white/10 text-sm font-semibold text-white/60 cursor-pointer"
                   whileHover={{ scale: 1.03, borderColor: 'rgba(255,255,255,0.3)' }}
                   whileTap={{ scale: 0.97 }}
                   onClick={onExit}
@@ -378,13 +562,13 @@ export function ShatteredGrid({ onExit }: ShatteredGridProps) {
                   Lobby
                 </motion.button>
                 <motion.button
-                  className="flex-1 py-3 rounded-lg text-sm font-bold"
+                  className="flex-1 py-3 rounded-lg text-sm font-bold cursor-pointer"
                   style={{ background: 'var(--color-accent)', color: 'var(--color-background)' }}
                   whileHover={{ scale: 1.03, opacity: 0.9 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => reset()}
+                  onClick={handleRestart}
                 >
-                  Again
+                  Play Again
                 </motion.button>
               </div>
             </motion.div>

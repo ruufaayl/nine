@@ -37,7 +37,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 function ModePlaceholder({ modeId, onExit }: { modeId: string; onExit: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0f] text-white gap-6 px-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--bg-primary)] text-white gap-6 px-6">
       <motion.div
         className="flex flex-col items-center gap-4 text-center"
         initial={{ opacity: 0, y: 12 }}

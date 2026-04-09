@@ -23,7 +23,7 @@ function StatCard({
     <motion.div
       className="flex flex-col items-center gap-1.5 py-4 px-3"
       style={{
-        background: '#0c0c14',
+        background: 'var(--bg-surface)',
         border: '1px solid rgba(255,255,255,0.06)',
       }}
       initial={{ opacity: 0, y: 12 }}
@@ -32,7 +32,7 @@ function StatCard({
     >
       <span
         className="text-lg font-black tabular-nums"
-        style={{ fontFamily: 'var(--font-display)', color: accent }}
+        style={{ fontFamily: 'var(--font-primary)', color: accent }}
       >
         {value}
       </span>
@@ -65,7 +65,7 @@ export default function GameResult() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 30%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -124,7 +124,7 @@ export default function GameResult() {
           <h1
             className="text-4xl sm:text-5xl font-black uppercase tracking-[0.15em] mb-2"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: outcomeColor,
               textShadow: `0 0 40px ${outcomeColor}40`,
             }}
@@ -147,7 +147,7 @@ export default function GameResult() {
           <span
             className="text-5xl font-black tabular-nums"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               color: '#fff',
               textShadow: `0 0 20px ${accent}30`,
             }}
@@ -172,7 +172,7 @@ export default function GameResult() {
         <motion.div
           className="flex items-center gap-3 mb-10 px-5 py-3"
           style={{
-            background: '#0c0c14',
+            background: 'var(--bg-surface)',
             border: `1px solid ${accent}20`,
           }}
           initial={{ opacity: 0, y: 12 }}
@@ -218,12 +218,12 @@ export default function GameResult() {
           <motion.button
             className="flex-1 py-3.5 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               background: accent,
-              color: '#0a0a0f',
-              boxShadow: '4px 4px 0px #fff',
+              color: 'var(--bg-primary)',
+              boxShadow: 'var(--shadow-md)',
             }}
-            whileHover={{ boxShadow: '6px 6px 0px #fff', y: -2 }}
+            whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate(`/play/matchmaking?mode=${modeId}`)}
           >
@@ -233,11 +233,11 @@ export default function GameResult() {
           <motion.button
             className="flex-1 py-3.5 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-primary)',
               background: 'transparent',
               color: 'rgba(255,255,255,0.5)',
               border: '2px solid rgba(255,255,255,0.1)',
-              boxShadow: '4px 4px 0px rgba(255,255,255,0.05)',
+              boxShadow: 'var(--shadow-sm)',
             }}
             whileHover={{ borderColor: 'rgba(255,255,255,0.3)' }}
             whileTap={{ scale: 0.97 }}

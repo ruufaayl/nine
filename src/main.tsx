@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
+import { ThemeProvider } from './hooks/useTheme';
 import './index.css';
 
 // ── Layouts ──
@@ -108,6 +109,43 @@ const router = createBrowserRouter([
       { path: '/me/edit',           element: <EditProfile /> },
       { path: '/me/stats',          element: <StatsHistory /> },
       { path: '/me/settings',       element: <Settings /> },
+
+      // ── API Resource Routes (server-side, no UI) ──
+      {
+        path: '/api/score',
+        lazy: async () => {
+          const mod = await import('./routes/api.score');
+          return { action: mod.action };
+        },
+      },
+      {
+        path: '/api/auth',
+        lazy: async () => {
+          const mod = await import('./routes/api.auth');
+          return { action: mod.action };
+        },
+      },
+      {
+        path: '/api/me',
+        lazy: async () => {
+          const mod = await import('./routes/api.me');
+          return { loader: mod.loader };
+        },
+      },
+      {
+        path: '/api/leaderboard',
+        lazy: async () => {
+          const mod = await import('./routes/api.leaderboard');
+          return { loader: mod.loader };
+        },
+      },
+      {
+        path: '/api/economy/balance',
+        lazy: async () => {
+          const mod = await import('./routes/api.economy.balance');
+          return { loader: mod.loader };
+        },
+      },
     ],
   },
 ]);
@@ -121,6 +159,8 @@ if (!root) throw new Error('Root element not found');
 
 createRoot(root).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </StrictMode>,
 );

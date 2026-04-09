@@ -68,7 +68,7 @@ export default function Matchmaking() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 40%, #12091f 0%, #0a0a0f 50%, #060609 100%)',
+          background: 'var(--bg-primary)',
         }}
       />
 
@@ -176,7 +176,7 @@ export default function Matchmaking() {
               key={messageIndex}
               className="text-xs uppercase tracking-[0.2em] text-center"
               style={{
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-primary)',
                 color: matchFound ? accent : 'rgba(255,255,255,0.4)',
               }}
               initial={{ opacity: 0, y: 8 }}

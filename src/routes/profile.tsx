@@ -109,8 +109,8 @@ export function ErrorBoundary() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        background: '#0a0a0f',
-        color: '#fff',
+        background: 'var(--bg-primary)',
+        color: 'var(--text-primary)',
         padding: '1.5rem',
       }}
     >
@@ -127,19 +127,19 @@ export function ErrorBoundary() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'rgba(255,255,255,0.8)', margin: 0 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)', margin: 0 }}>
           Profile Unavailable
         </h2>
-        <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+        <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', margin: 0 }}>
           {detail}
         </p>
         <motion.button
           style={{
             padding: '0.75rem 2rem',
             borderRadius: '0.5rem',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--border-default)',
             background: 'transparent',
-            color: 'rgba(255,255,255,0.4)',
+            color: 'var(--text-secondary)',
             fontSize: '0.7rem',
             fontWeight: 600,
             textTransform: 'uppercase',
@@ -193,12 +193,12 @@ export default function ProfileRoute() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--bg-primary)] overflow-x-hidden" style={{ color: 'var(--text-primary)' }}>
       {/* Background grid */}
       <svg className="fixed inset-0 w-full h-full pointer-events-none z-0" aria-hidden="true">
         <defs>
           <pattern id="profile-grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(var(--fg),0.03)" strokeWidth="0.5" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#profile-grid)" />
@@ -288,7 +288,7 @@ export default function ProfileRoute() {
             <span className="text-amber-400 text-lg mt-0.5">⚠</span>
             <div className="flex flex-col gap-1">
               <span className="text-xs font-bold text-amber-400/80">Temporary Account</span>
-              <span className="text-[0.65rem] text-white/30 leading-relaxed">
+              <span className="text-[0.65rem] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
                 Logging out will permanently delete your account, scores, and all
                 associated data from the leaderboard. This cannot be undone.
               </span>
