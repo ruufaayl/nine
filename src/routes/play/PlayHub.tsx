@@ -1,10 +1,10 @@
 // ──────────────────────────────────────────────
-// S-09 — Play Hub (Solid Card Pile)
+// S-09 — Play Hub (Solid Card Pile — Premium)
 //
-// Each mode is a full-bleed solid-color card, stacked
-// on the next. Scrolling flies the top card up and out,
-// revealing the next. Fully reversible and scroll-driven.
-// Design: premium solid color blocks, white type, Swiss/brutalist.
+// Solid-color cards stacked. Scroll flies them
+// up one-by-one. Last card locks in place (no fly).
+// Fully opaque — no transparency between cards.
+// Buttery spring physics, Swiss/brutalist design.
 // ──────────────────────────────────────────────
 
 import { useNavigate } from 'react-router';
@@ -24,27 +24,21 @@ import {
 
 // ─── Design tokens ──────────────────────────
 
-// Vertical scroll distance per card (fraction of viewport height).
-// Smaller = tighter, faster pile.
-const CARD_SCROLL_UNIT = 1.0;
-
-// Premium solid color palette — rich, saturated, paired with white text.
-// Each card gets its own color for visual rhythm as the pile flies.
 const MODE_COLORS: Record<string, { bg: string; ink: 'white' | 'black' }> = {
-  'prime-grid':      { bg: '#4338CA', ink: 'white' },  // indigo
-  'glyph-grid':      { bg: '#0F766E', ink: 'white' },  // teal
-  'shattered-grid':  { bg: '#B91C1C', ink: 'white' },  // crimson
-  'canvas-fracture': { bg: '#9333EA', ink: 'white' },  // violet
-  'vault-breaker':   { bg: '#DB2777', ink: 'white' },  // pink
-  'cipher-scramble': { bg: '#F59E0B', ink: 'black' },  // amber
-  'lexicon-weave':   { bg: '#1E40AF', ink: 'white' },  // royal blue
-  'enigma-weave':    { bg: '#7C2D12', ink: 'white' },  // burnt sienna
-  'interrogation':   { bg: '#EA580C', ink: 'white' },  // orange
-  'alias-protocol':  { bg: '#E11D48', ink: 'white' },  // rose
-  'global-override': { bg: '#047857', ink: 'white' },  // emerald
-  'data-sift':       { bg: '#FACC15', ink: 'black' },  // yellow
-  'cinema-lattice':  { bg: '#0369A1', ink: 'white' },  // sky
-  'chronos-shift':   { bg: '#78350F', ink: 'white' },  // bronze
+  'prime-grid':      { bg: '#4338CA', ink: 'white' },
+  'glyph-grid':      { bg: '#0F766E', ink: 'white' },
+  'shattered-grid':  { bg: '#B91C1C', ink: 'white' },
+  'canvas-fracture': { bg: '#9333EA', ink: 'white' },
+  'vault-breaker':   { bg: '#DB2777', ink: 'white' },
+  'cipher-scramble': { bg: '#F59E0B', ink: 'black' },
+  'lexicon-weave':   { bg: '#1E40AF', ink: 'white' },
+  'enigma-weave':    { bg: '#7C2D12', ink: 'white' },
+  'interrogation':   { bg: '#EA580C', ink: 'white' },
+  'alias-protocol':  { bg: '#E11D48', ink: 'white' },
+  'global-override': { bg: '#047857', ink: 'white' },
+  'data-sift':       { bg: '#FACC15', ink: 'black' },
+  'cinema-lattice':  { bg: '#0369A1', ink: 'white' },
+  'chronos-shift':   { bg: '#78350F', ink: 'white' },
 };
 
 const CATEGORY_SYMBOL: Record<GameCategory, string> = {
@@ -75,74 +69,92 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
   const fgLine = ink === 'white' ? 'rgba(255,255,255,0.22)' : 'rgba(10,10,10,0.22)';
   const symbol = CATEGORY_SYMBOL[mode.category];
 
-  // Each card owns a slice of the scroll track [start, end].
+  const isLast = index === total - 1;
+  // Each card owns a slice of the scroll track.
+  // The last card's slice is shorter — it only needs to come into view, not fly out.
   const step = 1 / total;
   const start = index * step;
   const end = (index + 1) * step;
 
-  // Smooth the scroll signal so animations feel buttery, not jittery.
-  const smooth = useSpring(scrollYProgress, { stiffness: 120, damping: 26, mass: 0.4 });
+  const smooth = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.35 });
 
-  // ── Motion transforms driven by smoothed progress ──
-  // Vertical fly: card sits, then translates up past the viewport.
+  // ── Motion transforms ──
+  // Last card: slides into view then LOCKS (no fly-out).
   const y = useTransform(
     smooth,
-    [Math.max(0, start - step * 0.5), start, end, Math.min(1, end + step * 0.2)],
-    ['2%', '0%', '-118%', '-118%'],
+    isLast
+      ? [Math.max(0, start - step * 0.3), start, 1]
+      : [Math.max(0, start - step * 0.3), start, end, Math.min(1, end + step * 0.1)],
+    isLast
+      ? ['4%', '0%', '0%']
+      : ['4%', '0%', '-110%', '-110%'],
   );
 
-  // Scale: gentle bloom when entering focus, tiny shrink as it leaves.
+  // Scale: gentle bloom in, slight shrink on exit (last card stays at 1).
   const scale = useTransform(
     smooth,
-    [Math.max(0, start - step * 1.2), start, end * 0.95, end],
-    [0.92 - index * 0.008, 1, 1, 0.985],
+    isLast
+      ? [Math.max(0, start - step * 0.8), start, 1]
+      : [Math.max(0, start - step * 0.8), start, end * 0.92, end],
+    isLast
+      ? [0.94, 1, 1]
+      : [0.94, 1, 1, 0.97],
   );
 
-  // Rotation: slight tilt on exit for kinetic feel.
+  // Rotation: slight tilt on exit for kinetic feel (last card: none).
   const rotate = useTransform(
     smooth,
-    [start, end * 0.85, end],
-    [0, -2, -5],
+    isLast
+      ? [start, 1]
+      : [start, end * 0.85, end],
+    isLast
+      ? [0, 0]
+      : [0, -1.5, -4],
   );
 
-  // Opacity: fade in from pile, crisp while active, fade on exit.
+  // Opacity: FULLY OPAQUE when active. No transparency gaps.
+  // Cards below are hidden by the card above — stack is opaque.
   const opacity = useTransform(
     smooth,
-    [Math.max(0, start - step), start - step * 0.5, start, end * 0.9, end],
-    [0.35, 0.7, 1, 1, 0],
+    isLast
+      ? [Math.max(0, start - step * 0.6), Math.max(0, start - step * 0.2), start, 1]
+      : [Math.max(0, start - step * 0.6), Math.max(0, start - step * 0.2), start, end * 0.85, end],
+    isLast
+      ? [0, 0.5, 1, 1]
+      : [0, 0.5, 1, 1, 0],
   );
 
-  // Shadow depth grows while the card is the hero.
-  const shadowOpacity = useTransform(
-    smooth,
-    [Math.max(0, start - step), start, end * 0.9, end],
-    [0.25, 0.55, 0.55, 0.2],
-  );
+  // Shadow depth.
   const boxShadow = useTransform(
-    shadowOpacity,
-    (o) =>
-      `0 40px 90px -30px rgba(0,0,0,${o + 0.15}), 0 20px 50px -20px rgba(0,0,0,${o}), 0 0 0 1px rgba(0,0,0,0.04)`,
+    smooth,
+    [Math.max(0, start - step), start, isLast ? 1 : end],
+    [
+      '0 20px 40px -15px rgba(0,0,0,0.2)',
+      '0 40px 80px -20px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.04)',
+      isLast
+        ? '0 40px 80px -20px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.04)'
+        : '0 10px 30px -10px rgba(0,0,0,0.15)',
+    ],
   );
 
-  // Inner content parallax — description drifts slightly slower than the card.
+  // Parallax content drift.
   const contentY = useTransform(
     smooth,
-    [start - step * 0.5, start, end],
-    [16, 0, -24],
+    [start - step * 0.3, start, isLast ? 1 : end],
+    [14, 0, isLast ? 0 : -20],
   );
 
   return (
     <motion.div
       className="absolute left-0 right-0 mx-auto"
       style={{
-        // Stack inset — underneath cards peek out as slim ridges.
-        top: `${index * 8}px`,
+        top: `${index * 6}px`,
         zIndex: total - index,
         y,
         scale,
         rotate,
         opacity,
-        transformOrigin: '50% 90%',
+        transformOrigin: '50% 85%',
       }}
     >
       <motion.button
@@ -158,37 +170,37 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
         <motion.div
           className="relative w-full h-full overflow-hidden"
           style={{
-            borderRadius: '32px',
+            borderRadius: '28px',
             background: bg,
             boxShadow,
           }}
         >
-          {/* Subtle top highlight — thin sheen for depth */}
+          {/* Top highlight sheen */}
           <div
             aria-hidden
             className="absolute inset-x-0 top-0 h-px pointer-events-none"
             style={{
-              background: `linear-gradient(90deg, transparent, ${ink === 'white' ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.18)'}, transparent)`,
+              background: `linear-gradient(90deg, transparent, ${ink === 'white' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.18)'}, transparent)`,
             }}
           />
 
-          {/* Oversized glyph watermark — brutalist detail */}
+          {/* Oversized glyph watermark */}
           <div
             aria-hidden
             className="absolute -right-6 -top-10 pointer-events-none select-none"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 900,
-              fontSize: '280px',
+              fontSize: '260px',
               lineHeight: 0.75,
-              color: ink === 'white' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)',
+              color: ink === 'white' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
               letterSpacing: '-0.05em',
             }}
           >
             {symbol}
           </div>
 
-          {/* Index tag — top-left */}
+          {/* Index tag + category — top */}
           <div className="relative flex items-center justify-between px-7 pt-7">
             <div
               className="flex items-center gap-2 px-3 py-1.5"
@@ -197,32 +209,23 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
                 borderRadius: '999px',
               }}
             >
-              <span
-                className="w-1 h-1 rounded-full"
-                style={{ background: fg }}
-              />
+              <span className="w-1 h-1 rounded-full" style={{ background: fg }} />
               <span
                 className="text-[0.55rem] font-semibold uppercase tracking-[0.18em]"
-                style={{
-                  color: fg,
-                  fontFamily: 'var(--font-body)',
-                }}
+                style={{ color: fg, fontFamily: 'var(--font-body)' }}
               >
                 {mode.category}
               </span>
             </div>
             <span
               className="text-[0.6rem] font-bold tabular-nums tracking-widest"
-              style={{
-                color: fgSoft,
-                fontFamily: 'var(--font-numeric)',
-              }}
+              style={{ color: fgSoft, fontFamily: 'var(--font-numeric)' }}
             >
               {String(index + 1).padStart(2, '0')} — {String(total).padStart(2, '0')}
             </span>
           </div>
 
-          {/* Title + description + meta — bottom, with parallax */}
+          {/* Title + description + meta — bottom */}
           <motion.div
             className="absolute inset-x-0 bottom-0 px-7 pb-7"
             style={{ y: contentY }}
@@ -232,15 +235,15 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
               style={{
                 fontFamily: 'var(--font-display)',
                 color: fg,
-                fontSize: 'clamp(2.6rem, 9vw, 3.6rem)',
+                fontSize: 'clamp(2.4rem, 8.5vw, 3.4rem)',
               }}
             >
               {mode.name}
             </h2>
             <p
-              className="text-[0.82rem] leading-relaxed mb-6 max-w-[90%]"
+              className="text-[0.8rem] leading-relaxed mb-6 max-w-[90%]"
               style={{
-                color: ink === 'white' ? 'rgba(255,255,255,0.78)' : 'rgba(0,0,0,0.72)',
+                color: ink === 'white' ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.7)',
                 fontFamily: 'var(--font-body)',
                 fontWeight: 500,
               }}
@@ -248,7 +251,7 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
               {mode.description}
             </p>
 
-            {/* Meta bar — format / duration / play button */}
+            {/* Meta bar */}
             <div
               className="flex items-end justify-between pt-5"
               style={{ borderTop: `1px solid ${fgLine}` }}
@@ -295,9 +298,7 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
                 }}
                 whileHover={{ scale: 1.04 }}
               >
-                <span className="text-[0.65rem] uppercase tracking-[0.18em]">
-                  Play
-                </span>
+                <span className="text-[0.65rem] uppercase tracking-[0.18em]">Play</span>
                 <span className="text-sm leading-none">→</span>
               </motion.div>
             </div>
@@ -315,11 +316,10 @@ export default function PlayHub() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
 
-  // Scroll track sized to accommodate all cards sequentially.
-  const trackHeightVh = GAME_MODES.length * CARD_SCROLL_UNIT * 100;
+  // Track sized so all cards (except last) get a full scroll unit.
+  // Last card needs less track — it just settles, doesn't fly out.
+  const trackHeightVh = (GAME_MODES.length - 0.3) * 100;
 
-  // IMPORTANT: PlayHub owns its own scroll container so useScroll can track it.
-  // The parent <main> (mobile-shell) stays static; scroll happens inside this div.
   const { scrollYProgress } = useScroll({
     container: containerRef,
     target: trackRef,
@@ -342,10 +342,7 @@ export default function PlayHub() {
           <div>
             <h1
               className="text-3xl font-black tracking-[-0.03em] leading-none"
-              style={{
-                fontFamily: 'var(--font-display)',
-                color: 'var(--text-primary)',
-              }}
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
             >
               Play
             </h1>
@@ -365,18 +362,18 @@ export default function PlayHub() {
         </div>
       </div>
 
-      {/* Scroll track — drives all card animations */}
+      {/* Scroll track */}
       <div
         ref={trackRef}
         className="relative px-6"
         style={{ height: `${trackHeightVh}vh` }}
       >
-        {/* Sticky viewport — the pile stays centered while scroll progresses */}
+        {/* Sticky viewport */}
         <div
           className="sticky mx-auto"
           style={{
-            top: '1rem',
-            height: 'calc(100dvh - 10rem)',
+            top: '0.75rem',
+            height: 'calc(100dvh - 9.5rem)',
             maxWidth: '390px',
           }}
         >
@@ -395,8 +392,8 @@ export default function PlayHub() {
         </div>
       </div>
 
-      {/* Trailing spacer so the last card has room to settle */}
-      <div style={{ height: '24vh' }} />
+      {/* Trailing spacer — enough for last card to settle cleanly */}
+      <div style={{ height: '16vh' }} />
     </div>
   );
 }

@@ -1,49 +1,30 @@
 // ──────────────────────────────────────────────
-// S-15 — Game Result (post-game screen)
+// S-15 — Game Result (Premium Post-Game)
+//
+// Victory / Defeat with mode color, animated score
+// counter, rank progression, trophy/XP breakdown.
 // ──────────────────────────────────────────────
 
 import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'framer-motion';
-import { getModeById, CATEGORY_ACCENTS } from '../../lib/gameModesData';
+import { getModeById } from '../../lib/gameModesData';
 
-// ─── Constants ──────────────────────────────
+// ─── Mode colors ───────────────────────────
 
-const MOCK_XP_EARNED = 320;
+const MODE_COLORS: Record<string, string> = {
+  'prime-grid': '#4338CA', 'glyph-grid': '#0F766E', 'shattered-grid': '#B91C1C',
+  'canvas-fracture': '#9333EA', 'vault-breaker': '#DB2777', 'cipher-scramble': '#F59E0B',
+  'lexicon-weave': '#1E40AF', 'enigma-weave': '#7C2D12', 'interrogation': '#EA580C',
+  'alias-protocol': '#E11D48', 'global-override': '#047857', 'data-sift': '#FACC15',
+  'cinema-lattice': '#0369A1', 'chronos-shift': '#78350F',
+};
+
+const EASE = [0.16, 1, 0.3, 1] as [number, number, number, number];
+
+// Mock data (real data will come from API)
+const MOCK_XP = 320;
 const MOCK_RANK_BEFORE = 'Recruit III';
 const MOCK_RANK_AFTER = 'Operative I';
-
-// ─── Stat Card ──────────────────────────────
-
-function StatCard({
-  label, value, accent, delay = 0,
-}: {
-  label: string; value: string; accent: string; delay?: number;
-}) {
-  return (
-    <motion.div
-      className="flex flex-col items-center gap-1.5 py-4 px-3"
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid rgba(255,255,255,0.06)',
-      }}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.35 }}
-    >
-      <span
-        className="text-lg font-black tabular-nums"
-        style={{ fontFamily: 'var(--font-primary)', color: accent }}
-      >
-        {value}
-      </span>
-      <span className="text-[0.45rem] uppercase tracking-[0.25em] text-white/25">
-        {label}
-      </span>
-    </motion.div>
-  );
-}
-
-// ─── Game Result ────────────────────────────
 
 export default function GameResult() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -54,199 +35,288 @@ export default function GameResult() {
   const outcome = searchParams.get('outcome') ?? 'win';
   const score = parseInt(searchParams.get('score') ?? '1250', 10);
   const mode = getModeById(modeId);
-  const accent = mode ? CATEGORY_ACCENTS[mode.category] : '#00FFFF';
+  const color = MODE_COLORS[modeId] ?? '#6C63FF';
 
   const isWin = outcome === 'win';
-  const outcomeColor = isWin ? accent : '#ff6b6b';
 
   return (
-    <div className="relative min-h-screen text-white overflow-hidden">
-      {/* Background */}
-      <div
-        className="fixed inset-0 pointer-events-none"
+    <div className="relative min-h-full overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+
+      {/* ── Outcome Banner ── */}
+      <motion.div
+        className="relative overflow-hidden"
         style={{
-          background: 'var(--bg-primary)',
+          background: isWin ? color : '#DC2626',
+          padding: '48px 24px 36px',
         }}
-      />
-
-      {/* Win celebration particles */}
-      {isWin && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 rounded-full"
-              style={{
-                background: accent,
-                left: `${15 + i * 10}%`,
-                top: '-5%',
-              }}
-              animate={{
-                y: ['0vh', '110vh'],
-                x: [0, (i % 2 === 0 ? 30 : -30)],
-                opacity: [0.6, 0],
-              }}
-              transition={{
-                duration: 3 + i * 0.4,
-                delay: 0.5 + i * 0.15,
-                repeat: Infinity,
-                repeatDelay: 2,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
-        {/* Outcome Banner */}
-        <motion.div
-          className="text-center mb-10"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Watermark */}
+        <div
+          className="absolute -right-6 -top-4 select-none pointer-events-none"
+          style={{
+            fontSize: '200px',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 900,
+            opacity: 0.06,
+            color: '#fff',
+            lineHeight: 1,
+          }}
         >
+          {isWin ? '⚡' : '✕'}
+        </div>
+
+        <div className="absolute top-0 left-6 right-6 h-px" style={{ background: 'rgba(255,255,255,0.2)' }} />
+
+        {/* Particles on win */}
+        {isWin && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: 3 + (i % 3) * 2,
+                  height: 3 + (i % 3) * 2,
+                  background: '#fff',
+                  left: `${8 + i * 7.5}%`,
+                  top: '-5%',
+                }}
+                animate={{ y: ['0%', '800%'], opacity: [0.6, 0], x: [0, (i % 2 === 0 ? 20 : -20)] }}
+                transition={{ duration: 2.5 + i * 0.3, delay: 0.3 + i * 0.1, repeat: Infinity, repeatDelay: 3 }}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="relative z-10 text-center">
           {/* Outcome glyph */}
-          <motion.span
-            className="text-6xl block mb-4"
-            animate={isWin
-              ? { rotate: [0, -10, 10, -5, 5, 0], scale: [1, 1.2, 1] }
-              : { opacity: [0.5, 1, 0.5] }
-            }
-            transition={isWin
-              ? { delay: 0.3, duration: 0.6 }
-              : { duration: 2, repeat: Infinity }
-            }
+          <motion.div
+            className="text-5xl mb-4"
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
           >
             {isWin ? '⚡' : '✕'}
-          </motion.span>
+          </motion.div>
 
-          {/* Outcome text */}
-          <h1
-            className="text-4xl sm:text-5xl font-black uppercase tracking-[0.15em] mb-2"
-            style={{
-              fontFamily: 'var(--font-primary)',
-              color: outcomeColor,
-              textShadow: `0 0 40px ${outcomeColor}40`,
-            }}
+          {/* Victory / Defeat */}
+          <motion.h1
+            className="text-4xl font-black uppercase tracking-[0.08em] mb-2"
+            style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, ease: EASE }}
           >
             {isWin ? 'Victory' : 'Defeat'}
-          </h1>
+          </motion.h1>
 
-          <p className="text-[0.55rem] uppercase tracking-[0.3em] text-white/25">
+          <motion.p
+            className="text-[0.6rem] font-semibold uppercase tracking-[0.15em]"
+            style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-body)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
             {mode?.name ?? modeId} · Match #{gameId?.slice(-6) ?? '------'}
-          </p>
-        </motion.div>
+          </motion.p>
+        </div>
+      </motion.div>
 
-        {/* Score display */}
+      {/* ── Content ── */}
+      <div className="w-full max-w-lg mx-auto px-5 py-6 flex flex-col gap-5">
+
+        {/* Score */}
         <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 16 }}
+          className="text-center py-2"
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.45, ease: EASE }}
         >
-          <span
+          <motion.span
             className="text-5xl font-black tabular-nums"
             style={{
-              fontFamily: 'var(--font-primary)',
-              color: '#fff',
-              textShadow: `0 0 20px ${accent}30`,
+              fontFamily: 'var(--font-display)',
+              color: 'var(--text-primary)',
             }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, type: 'spring', stiffness: 200, damping: 15 }}
           >
             {score.toLocaleString()}
-          </span>
-          <p className="text-[0.5rem] uppercase tracking-[0.3em] text-white/25 mt-1">
+          </motion.span>
+          <p
+            className="text-[0.55rem] font-semibold uppercase tracking-[0.15em] mt-1"
+            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+          >
             Final Score
           </p>
         </motion.div>
 
         {/* Stats grid */}
-        <div
-          className="grid grid-cols-3 gap-3 w-full max-w-sm mb-8"
-        >
-          <StatCard label="XP Earned" value={`+${MOCK_XP_EARNED}`} accent={accent} delay={0.4} />
-          <StatCard label="Delta" value={isWin ? '+25' : '-12'} accent={outcomeColor} delay={0.5} />
-          <StatCard label="Time" value="4:32" accent="rgba(255,255,255,0.5)" delay={0.6} />
-        </div>
-
-        {/* Rank change */}
         <motion.div
-          className="flex items-center gap-3 mb-10 px-5 py-3"
+          className="grid grid-cols-3 gap-2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55, ease: EASE }}
+        >
+          <StatTile label="XP Earned" value={`+${MOCK_XP}`} color={color} />
+          <StatTile label="Trophies" value={isWin ? '+25' : '-12'} color={isWin ? '#34C759' : '#EF4444'} />
+          <StatTile label="Time" value="4:32" color="var(--text-secondary)" />
+        </motion.div>
+
+        {/* Rank progression */}
+        <motion.div
+          className="flex items-center justify-center gap-3 py-4 px-5"
           style={{
-            background: 'var(--bg-surface)',
-            border: `1px solid ${accent}20`,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
           }}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.65, ease: EASE }}
         >
-          <span className="text-[0.5rem] uppercase tracking-widest text-white/30">
+          <span
+            className="text-[0.6rem] font-semibold"
+            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+          >
             {MOCK_RANK_BEFORE}
           </span>
           <motion.span
             className="text-sm"
-            style={{ color: accent }}
+            style={{ color: color }}
             animate={{ x: [0, 4, 0] }}
-            transition={{ duration: 0.8, delay: 1 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
           >
             →
           </motion.span>
           <span
-            className="text-[0.5rem] font-bold uppercase tracking-widest"
-            style={{ color: accent }}
+            className="text-[0.6rem] font-bold"
+            style={{ color: color, fontFamily: 'var(--font-display)' }}
           >
             {MOCK_RANK_AFTER}
           </span>
           <span
-            className="text-[0.45rem] uppercase tracking-widest px-2 py-0.5 ml-1"
+            className="text-[0.5rem] font-bold uppercase tracking-[0.1em] px-2 py-0.5"
             style={{
-              background: `${accent}15`,
-              color: accent,
-              border: `1px solid ${accent}30`,
+              background: `${color}12`,
+              color: color,
+              border: `1px solid ${color}25`,
+              borderRadius: 'var(--radius-full)',
+              fontFamily: 'var(--font-body)',
             }}
           >
             Rank Up!
           </span>
         </motion.div>
 
-        {/* CTAs */}
+        {/* Action buttons */}
         <motion.div
-          className="flex flex-col sm:flex-row gap-3 w-full max-w-sm"
-          initial={{ opacity: 0, y: 16 }}
+          className="flex flex-col gap-3 pt-2 pb-6"
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.75, ease: EASE }}
         >
+          {/* Rematch */}
           <motion.button
-            className="flex-1 py-3.5 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
+            className="w-full py-4 cursor-pointer relative overflow-hidden"
             style={{
-              fontFamily: 'var(--font-primary)',
-              background: accent,
-              color: 'var(--bg-primary)',
-              boxShadow: 'var(--shadow-md)',
+              background: color,
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
             }}
-            whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ y: -2, scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate(`/play/matchmaking?mode=${modeId}`)}
           >
-            Rematch
+            <div className="relative z-10 flex items-center justify-center gap-3">
+              <span className="text-lg" style={{ lineHeight: 1 }}>⚡</span>
+              <span
+                className="text-[0.8rem] font-black uppercase tracking-[0.08em]"
+                style={{ fontFamily: 'var(--font-display)', color: '#fff' }}
+              >
+                Rematch
+              </span>
+            </div>
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%)',
+              }}
+            />
           </motion.button>
 
+          {/* Review */}
           <motion.button
-            className="flex-1 py-3.5 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer"
+            className="w-full py-3.5 cursor-pointer"
             style={{
-              fontFamily: 'var(--font-primary)',
-              background: 'transparent',
-              color: 'rgba(255,255,255,0.5)',
-              border: '2px solid rgba(255,255,255,0.1)',
-              boxShadow: 'var(--shadow-sm)',
+              background: 'none',
+              border: '2px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
             }}
-            whileHover={{ borderColor: 'rgba(255,255,255,0.3)' }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ y: -1, borderColor: color }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate(`/play/review/${gameId}?mode=${modeId}`)}
+          >
+            <span
+              className="text-[0.75rem] font-bold uppercase tracking-[0.08em]"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
+            >
+              Review Game
+            </span>
+          </motion.button>
+
+          {/* Play Hub */}
+          <motion.button
+            className="w-full py-3 cursor-pointer"
+            style={{
+              background: 'none',
+              border: 'none',
+              fontFamily: 'var(--font-body)',
+            }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/play')}
           >
-            Play Hub
+            <span
+              className="text-[0.7rem] font-semibold"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
+              ← Back to Play Hub
+            </span>
           </motion.button>
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+// ─── Stat Tile ─────────────────────────────
+
+function StatTile({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div
+      className="flex flex-col items-center py-4"
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-sm)',
+      }}
+    >
+      <span
+        className="text-lg font-black tabular-nums"
+        style={{ fontFamily: 'var(--font-numeric)', color }}
+      >
+        {value}
+      </span>
+      <span
+        className="text-[0.5rem] font-semibold uppercase tracking-[0.12em] mt-0.5"
+        style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+      >
+        {label}
+      </span>
     </div>
   );
 }

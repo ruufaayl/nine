@@ -1,5 +1,6 @@
 // ──────────────────────────────────────────────
-// NINE — App Layout (Liquid Nav + Theme Toggle)
+// NINE — App Layout (Premium Nav)
+// Frosted header · currency chips · fluid bottom nav
 // ──────────────────────────────────────────────
 
 import { Outlet, useNavigate, useLocation, useLoaderData, useOutletContext } from 'react-router';
@@ -58,24 +59,23 @@ export function useUser(): AppUser | null {
   return ctx?.user ?? null;
 }
 
-// ─── Theme Toggle Button ────────────────────
+// ─── Theme Toggle ───────────────────────────
 
 function ThemeToggle() {
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
     <motion.button
       onClick={toggleTheme}
-      className="relative w-9 h-9 flex items-center justify-center outline-none cursor-pointer"
+      className="relative w-8 h-8 flex items-center justify-center outline-none cursor-pointer"
       style={{
         borderRadius: 'var(--radius-full)',
         background: 'var(--bg-card)',
         border: '1px solid var(--border-subtle)',
       }}
-      whileHover={{ scale: 1.08, borderColor: 'var(--border-default)' }}
+      whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.92 }}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
     >
       <AnimatePresence mode="wait">
         {isDark ? (
@@ -84,8 +84,8 @@ function ThemeToggle() {
             initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
             animate={{ rotate: 0, opacity: 1, scale: 1 }}
             exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-            className="text-sm"
+            transition={{ duration: 0.15 }}
+            className="text-xs"
           >
             ☀️
           </motion.span>
@@ -95,8 +95,8 @@ function ThemeToggle() {
             initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
             animate={{ rotate: 0, opacity: 1, scale: 1 }}
             exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.2 }}
-            className="text-sm"
+            transition={{ duration: 0.15 }}
+            className="text-xs"
           >
             🌙
           </motion.span>
@@ -109,11 +109,11 @@ function ThemeToggle() {
 // ─── Nav Items ──────────────────────────────
 
 const NAV_ITEMS = [
-  { label: 'Home',     path: '/',         icon: '⌂' },
-  { label: 'Play',     path: '/play',     icon: '▶' },
-  { label: 'Social',   path: '/social',   icon: '●●' },
-  { label: 'Ranks',    path: '/rankings', icon: '◆' },
-  { label: 'Profile',  path: '/me',       icon: '○' },
+  { label: 'Home',    path: '/',         glyph: '⌂' },
+  { label: 'Play',    path: '/play',     glyph: '▶' },
+  { label: 'Social',  path: '/social',   glyph: '●●' },
+  { label: 'Ranks',   path: '/rankings', glyph: '◆' },
+  { label: 'Profile', path: '/me',       glyph: '○' },
 ] as const;
 
 // ─── Component ──────────────────────────────
@@ -129,85 +129,117 @@ export default function AppLayout() {
 
   return (
     <div className="mobile-shell">
-      {/* ── Top Header Bar ── */}
+      {/* ── Top Header ── */}
       <motion.header
-        className={clsx(
-          'flex items-center justify-between',
-          'h-14 px-5',
-        )}
+        className="flex items-center justify-between h-13 px-5"
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           borderBottom: '1px solid var(--nav-border)',
         }}
-        initial={{ y: -56, opacity: 0 }}
+        initial={{ y: -52, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       >
         {/* Logo */}
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2.5 outline-none group"
+          className="outline-none cursor-pointer"
+          style={{ background: 'none', border: 'none', padding: 0 }}
         >
           <span
-            className="text-lg font-extrabold tracking-tight group-hover:opacity-80 transition-opacity"
+            className="text-[1.05rem] font-black tracking-[-0.04em]"
             style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
           >
             NINE
           </span>
         </button>
 
-        {/* Right: Theme toggle + Coins + Trophies + User */}
-        <div className="flex items-center gap-2.5">
+        {/* Right cluster */}
+        <div className="flex items-center gap-2">
           <ThemeToggle />
 
           {user && (
             <>
-              {/* Coins */}
-              <div className="pill pill-gold gap-1.5">
-                <span style={{ fontSize: '0.7rem' }}>🪙</span>
-                <span className="tabular-nums">{(user.coins ?? 5000).toLocaleString()}</span>
+              {/* Coins chip */}
+              <div
+                className="flex items-center gap-1 px-2.5 py-1"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.15)',
+                  borderRadius: 'var(--radius-full)',
+                }}
+              >
+                <span className="text-[0.6rem]">🪙</span>
+                <span
+                  className="text-[0.65rem] font-bold tabular-nums"
+                  style={{ color: '#B45309', fontFamily: 'var(--font-numeric)' }}
+                >
+                  {(user.coins ?? 5000).toLocaleString()}
+                </span>
               </div>
-              {/* Trophies */}
-              <div className="pill pill-trophy gap-1.5">
-                <span style={{ fontSize: '0.7rem' }}>🏆</span>
-                <span className="tabular-nums">{(user.trophies ?? 0).toLocaleString()}</span>
+
+              {/* Trophies chip */}
+              <div
+                className="flex items-center gap-1 px-2.5 py-1"
+                style={{
+                  background: 'rgba(139, 92, 246, 0.08)',
+                  border: '1px solid rgba(139, 92, 246, 0.15)',
+                  borderRadius: 'var(--radius-full)',
+                }}
+              >
+                <span className="text-[0.6rem]">🏆</span>
+                <span
+                  className="text-[0.65rem] font-bold tabular-nums"
+                  style={{ color: '#7C3AED', fontFamily: 'var(--font-numeric)' }}
+                >
+                  {(user.trophies ?? 0).toLocaleString()}
+                </span>
               </div>
             </>
           )}
 
+          {/* Avatar or Sign In */}
           {user ? (
             <button
               onClick={() => navigate('/me')}
-              className="flex items-center gap-2.5 outline-none group ml-0.5"
+              className="outline-none cursor-pointer ml-0.5"
+              style={{ background: 'none', border: 'none', padding: 0 }}
             >
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                className="w-7 h-7 rounded-full flex items-center justify-center"
                 style={{
                   background: 'var(--accent-primary)',
                   color: '#fff',
+                  fontSize: '0.65rem',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-display)',
                 }}
               >
-                {user.username.charAt(0).toUpperCase()}
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  user.username.charAt(0).toUpperCase()
+                )}
               </div>
             </button>
           ) : (
             <motion.button
               onClick={() => navigate('/auth')}
-              className={clsx(
-                'text-xs font-semibold',
-                'px-5 py-2',
-                'transition-all duration-200',
-              )}
+              className="text-[0.65rem] font-bold px-4 py-1.5 cursor-pointer"
               style={{
-                fontFamily: 'var(--font-primary)',
+                fontFamily: 'var(--font-display)',
                 background: 'var(--accent-primary)',
                 color: '#fff',
                 borderRadius: 'var(--radius-full)',
                 border: 'none',
               }}
-              whileHover={{ scale: 1.03, opacity: 0.9 }}
+              whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
               Sign In
@@ -221,7 +253,7 @@ export default function AppLayout() {
         <Outlet context={{ user } satisfies AppContext} />
       </main>
 
-      {/* ── Bottom Nav Bar ── */}
+      {/* ── Bottom Nav ── */}
       <nav
         className="relative z-50"
         style={{
@@ -231,7 +263,7 @@ export default function AppLayout() {
           borderTop: '1px solid var(--nav-border)',
         }}
       >
-        <div className="flex items-center justify-around h-16 px-2 max-w-lg mx-auto">
+        <div className="flex items-center justify-around h-14 px-2 max-w-lg mx-auto">
           {NAV_ITEMS.map((item) => {
             const isActive = item === activeTab;
             return (
@@ -239,18 +271,22 @@ export default function AppLayout() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={clsx(
-                  'relative flex flex-col items-center justify-center gap-1',
-                  'w-16 py-1.5 outline-none',
+                  'relative flex flex-col items-center justify-center gap-0.5',
+                  'w-14 py-1.5 outline-none cursor-pointer',
                   'transition-all duration-200',
                 )}
-                style={{ borderRadius: 'var(--radius-sm)' }}
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'none',
+                  border: 'none',
+                }}
               >
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
                     className="absolute inset-0"
                     style={{
-                      background: 'rgba(108, 99, 255, 0.1)',
+                      background: 'rgba(108, 99, 255, 0.08)',
                       borderRadius: 'var(--radius-sm)',
                     }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
@@ -258,17 +294,17 @@ export default function AppLayout() {
                 )}
 
                 <span
-                  className="relative text-sm leading-none transition-colors duration-200"
+                  className="relative text-[0.85rem] leading-none transition-colors duration-200"
                   style={{
                     color: isActive ? 'var(--accent-primary)' : 'var(--text-tertiary)',
                   }}
                 >
-                  {item.icon}
+                  {item.glyph}
                 </span>
                 <span
-                  className="relative text-[0.6rem] font-semibold tracking-wide transition-colors duration-200"
+                  className="relative text-[0.55rem] font-semibold tracking-[0.06em] transition-colors duration-200"
                   style={{
-                    fontFamily: 'var(--font-primary)',
+                    fontFamily: 'var(--font-body)',
                     color: isActive ? 'var(--accent-primary)' : 'var(--text-tertiary)',
                   }}
                 >
