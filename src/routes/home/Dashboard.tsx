@@ -44,8 +44,8 @@ export default function Dashboard() {
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
           <h1
-            className="text-2xl font-extrabold tracking-tight mb-1"
-            style={{ fontFamily: 'var(--font-primary)', color: 'var(--text-primary)' }}
+            className="text-3xl font-black tracking-[-0.02em] mb-1"
+            style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
           >
             Hey, <span style={{ color: 'var(--accent-primary)' }}>{displayName}</span>
           </h1>
@@ -171,8 +171,8 @@ export default function Dashboard() {
               <span className="text-xl">{stat.icon}</span>
               <div>
                 <p
-                  className="text-lg font-bold tabular-nums"
-                  style={{ fontFamily: 'var(--font-primary)', color: 'var(--text-primary)' }}
+                  className="text-xl tabular-nums"
+                  style={{ fontFamily: 'var(--font-numeric)', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
                 >
                   {stat.value}
                 </p>

@@ -58,8 +58,8 @@ export function PrimeGrid({ onExit }: PrimeGridProps) {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       >
         <h1
-          className="text-3xl font-extrabold tracking-tight"
-          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-primary)' }}
+          className="text-4xl font-black tracking-[-0.02em]"
+          style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
         >
           Prime Grid
         </h1>

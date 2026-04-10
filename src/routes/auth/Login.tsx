@@ -1,11 +1,15 @@
 // ──────────────────────────────────────────────
-// S-02 — Login
+// S-02 — Login (Premium)
+// Social providers + email/password + guest.
+// Matches PlayHub visual language.
 // ──────────────────────────────────────────────
 
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AuthShell } from '../../components/Auth/AuthShell';
+import { GoogleIcon, AppleIcon, MailIcon, EyeIcon, EyeOffIcon } from '../../components/Auth/BrandIcons';
 
 interface LoginForm {
   email: string;
@@ -16,6 +20,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -26,7 +32,6 @@ export default function Login() {
   const onSubmit = async (data: LoginForm) => {
     setServerError('');
     setSubmitting(true);
-
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -34,14 +39,34 @@ export default function Login() {
         credentials: 'include',
         body: JSON.stringify({ intent: 'login', ...data }),
       });
-
       const json = await res.json();
-
       if (!res.ok) {
         setServerError(json.errors?.form ?? json.error ?? 'Login failed.');
         return;
       }
+      localStorage.setItem('nine_session', 'active');
+      navigate('/', { replace: true });
+    } catch {
+      setServerError('Network error. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
+  const handleGuest = async () => {
+    setServerError('');
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ intent: 'guest' }),
+      });
+      if (!res.ok) {
+        setServerError('Failed to create guest session.');
+        return;
+      }
       localStorage.setItem('nine_session', 'active');
       navigate('/', { replace: true });
     } catch {
@@ -52,126 +77,310 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6">
-      <motion.div
-        className="w-full max-w-sm"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+    <AuthShell showFooter>
+      <div className="flex flex-col items-center justify-center min-h-full px-7 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
+        <motion.div
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
           <h1
-            className="text-2xl font-black uppercase tracking-[0.15em] text-white mb-2"
-            style={{ fontFamily: 'var(--font-primary)' }}
-          >
-            Access Terminal
-          </h1>
-          <p className="text-[0.55rem] uppercase tracking-[0.3em] text-white/25">
-            Enter your credentials
-          </p>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {/* Email */}
-          <div>
-            <label className="block text-[0.5rem] uppercase tracking-[0.25em] text-white/30 mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              autoComplete="email"
-              className="w-full px-4 py-3 text-sm text-white bg-transparent outline-none"
-              style={{
-                border: `2px solid ${errors.email ? '#ff6b6b' : 'rgba(255,255,255,0.1)'}`,
-                fontFamily: 'var(--font-primary)',
-              }}
-              placeholder="agent@nine.io"
-              {...register('email', {
-                required: 'Email is required.',
-                pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email.' },
-              })}
-            />
-            {errors.email && (
-              <p className="text-[0.55rem] text-[#ff6b6b] mt-1">{errors.email.message}</p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-[0.5rem] uppercase tracking-[0.25em] text-white/30 mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              autoComplete="current-password"
-              className="w-full px-4 py-3 text-sm text-white bg-transparent outline-none"
-              style={{
-                border: `2px solid ${errors.password ? '#ff6b6b' : 'rgba(255,255,255,0.1)'}`,
-                fontFamily: 'var(--font-primary)',
-              }}
-              placeholder="••••••••"
-              {...register('password', {
-                required: 'Password is required.',
-                minLength: { value: 6, message: 'Minimum 6 characters.' },
-              })}
-            />
-            {errors.password && (
-              <p className="text-[0.55rem] text-[#ff6b6b] mt-1">{errors.password.message}</p>
-            )}
-          </div>
-
-          {/* Server error */}
-          {serverError && (
-            <motion.div
-              className="px-4 py-2.5 text-[0.6rem] text-[#ff6b6b]"
-              style={{ background: 'rgba(255,107,107,0.06)', border: '1px solid rgba(255,107,107,0.15)' }}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              {serverError}
-            </motion.div>
-          )}
-
-          {/* Submit */}
-          <motion.button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-3.5 text-sm font-bold uppercase tracking-[0.15em] cursor-pointer disabled:opacity-40"
+            className="text-3xl font-black tracking-[-0.03em] mb-2"
             style={{
-              fontFamily: 'var(--font-primary)',
-              background: 'var(--accent-primary)',
-              color: 'var(--bg-primary)',
-              boxShadow: 'var(--shadow-md)',
+              fontFamily: 'var(--font-display)',
+              color: 'var(--text-primary)',
             }}
-            whileHover={{ boxShadow: 'var(--shadow-lg)', y: -2 }}
-            whileTap={{ scale: 0.97 }}
           >
-            {submitting ? 'Authenticating…' : 'Log In'}
-          </motion.button>
-        </form>
+            Welcome back
+          </h1>
+          <p
+            className="text-sm"
+            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+          >
+            Sign in to continue playing
+          </p>
+        </motion.div>
 
-        {/* Links */}
-        <div className="flex flex-col items-center gap-3 mt-6">
-          <Link
-            to="/forgot-password"
-            className="text-[0.55rem] uppercase tracking-[0.2em] text-white/20 hover:text-white/50 transition-colors"
+        {/* Social buttons */}
+        <motion.div
+          className="w-full max-w-sm flex flex-col gap-3 mb-6"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+        >
+          {/* Google */}
+          <motion.button
+            className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              color: 'var(--text-primary)',
+            }}
+            whileHover={{ y: -1, borderColor: 'var(--border-strong)' }}
+            whileTap={{ scale: 0.98 }}
           >
-            Forgot Password?
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-[0.55rem] text-white/15">New operative?</span>
-            <Link
-              to="/register"
-              className="text-[0.55rem] uppercase tracking-[0.2em] text-white/40 hover:text-white/70 transition-colors"
-              style={{ color: 'var(--accent-secondary)' }}
+            <GoogleIcon size={18} />
+            <span>Continue with Google</span>
+          </motion.button>
+
+          {/* Apple */}
+          <motion.button
+            className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+            style={{
+              background: 'var(--text-primary)',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              color: 'var(--bg-primary)',
+            }}
+            whileHover={{ y: -1, opacity: 0.92 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <AppleIcon size={18} />
+            <span>Continue with Apple</span>
+          </motion.button>
+        </motion.div>
+
+        {/* Divider */}
+        <motion.div
+          className="w-full max-w-sm flex items-center gap-4 mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className="flex-1 h-px" style={{ background: 'var(--border-subtle)' }} />
+          <span
+            className="text-[0.65rem] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+          >
+            or
+          </span>
+          <div className="flex-1 h-px" style={{ background: 'var(--border-subtle)' }} />
+        </motion.div>
+
+        {/* Email toggle / form */}
+        <AnimatePresence mode="wait">
+          {!showEmail ? (
+            <motion.div
+              key="email-toggle"
+              className="w-full max-w-sm flex flex-col gap-3"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
             >
-              Register
-            </Link>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+              <motion.button
+                onClick={() => setShowEmail(true)}
+                className="flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: 'var(--text-secondary)',
+                }}
+                whileHover={{ y: -1, borderColor: 'var(--border-default)' }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <MailIcon size={18} />
+                <span>Sign in with Email</span>
+              </motion.button>
+
+              {/* Guest */}
+              <motion.button
+                onClick={handleGuest}
+                disabled={submitting}
+                className="w-full py-3 text-[0.75rem] font-semibold cursor-pointer disabled:opacity-40"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-tertiary)',
+                  fontFamily: 'var(--font-body)',
+                }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Continue as Guest
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.form
+              key="email-form"
+              onSubmit={handleSubmit(onSubmit)}
+              className="w-full max-w-sm flex flex-col gap-4"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              {/* Email */}
+              <div>
+                <label
+                  className="block text-[0.65rem] font-semibold uppercase tracking-[0.15em] mb-2"
+                  style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  className="w-full px-4 py-3 text-sm outline-none"
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: `1.5px solid ${errors.email ? 'var(--accent-error)' : 'var(--border-subtle)'}`,
+                    borderRadius: 'var(--radius-sm)',
+                    fontFamily: 'var(--font-body)',
+                    color: 'var(--text-primary)',
+                  }}
+                  placeholder="you@example.com"
+                  {...register('email', {
+                    required: 'Email is required.',
+                    pattern: { value: /^\S+@\S+\.\S+$/, message: 'Invalid email.' },
+                  })}
+                />
+                {errors.email && (
+                  <p className="text-[0.65rem] mt-1.5" style={{ color: 'var(--accent-error)' }}>
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label
+                    className="text-[0.65rem] font-semibold uppercase tracking-[0.15em]"
+                    style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+                  >
+                    Password
+                  </label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[0.65rem] font-semibold transition-colors"
+                    style={{ color: 'var(--accent-primary)', fontFamily: 'var(--font-body)' }}
+                  >
+                    Forgot?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    className="w-full px-4 py-3 pr-11 text-sm outline-none"
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: `1.5px solid ${errors.password ? 'var(--accent-error)' : 'var(--border-subtle)'}`,
+                      borderRadius: 'var(--radius-sm)',
+                      fontFamily: 'var(--font-body)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="Min 6 characters"
+                    {...register('password', {
+                      required: 'Password is required.',
+                      minLength: { value: 6, message: 'Minimum 6 characters.' },
+                    })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                    style={{ color: 'var(--text-tertiary)', background: 'none', border: 'none' }}
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-[0.65rem] mt-1.5" style={{ color: 'var(--accent-error)' }}>
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Server error */}
+              {serverError && (
+                <motion.div
+                  className="px-4 py-2.5 text-[0.7rem]"
+                  style={{
+                    color: 'var(--accent-error)',
+                    background: 'rgba(255,59,48,0.06)',
+                    border: '1px solid rgba(255,59,48,0.15)',
+                    borderRadius: 'var(--radius-xs)',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {serverError}
+                </motion.div>
+              )}
+
+              {/* Submit */}
+              <motion.button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3.5 text-sm font-bold cursor-pointer disabled:opacity-40"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  background: 'var(--accent-primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  letterSpacing: '-0.01em',
+                }}
+                whileHover={{ y: -1, opacity: 0.92 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {submitting ? 'Signing in...' : 'Sign In'}
+              </motion.button>
+
+              {/* Back to providers */}
+              <button
+                type="button"
+                onClick={() => setShowEmail(false)}
+                className="text-[0.7rem] font-semibold cursor-pointer"
+                style={{
+                  color: 'var(--text-tertiary)',
+                  fontFamily: 'var(--font-body)',
+                  background: 'none',
+                  border: 'none',
+                }}
+              >
+                ← All sign in options
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {/* Register link */}
+        <motion.div
+          className="mt-8 flex items-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span className="text-[0.75rem]" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}>
+            New to NINE?
+          </span>
+          <Link
+            to="/register"
+            className="text-[0.75rem] font-bold transition-colors"
+            style={{ color: 'var(--accent-primary)', fontFamily: 'var(--font-body)' }}
+          >
+            Create account
+          </Link>
+        </motion.div>
+      </div>
+    </AuthShell>
   );
 }

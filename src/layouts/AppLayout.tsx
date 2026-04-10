@@ -128,14 +128,10 @@ export default function AppLayout() {
   );
 
   return (
-    <div
-      className="min-h-screen pb-20"
-      style={{ background: 'var(--bg-primary)' }}
-    >
+    <div className="mobile-shell">
       {/* ── Top Header Bar ── */}
       <motion.header
         className={clsx(
-          'fixed top-0 left-0 right-0 z-50',
           'flex items-center justify-between',
           'h-14 px-5',
         )}
@@ -156,7 +152,7 @@ export default function AppLayout() {
         >
           <span
             className="text-lg font-extrabold tracking-tight group-hover:opacity-80 transition-opacity"
-            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-primary)' }}
+            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}
           >
             NINE
           </span>
@@ -221,13 +217,13 @@ export default function AppLayout() {
       </motion.header>
 
       {/* ── Main Content ── */}
-      <div className="pt-14">
+      <main>
         <Outlet context={{ user } satisfies AppContext} />
-      </div>
+      </main>
 
       {/* ── Bottom Nav Bar ── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50"
+        className="relative z-50"
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(24px)',

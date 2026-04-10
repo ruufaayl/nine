@@ -15,6 +15,11 @@ import Register from './routes/auth/Register';
 import ForgotPassword from './routes/auth/ForgotPassword';
 import Onboarding from './routes/auth/Onboarding';
 
+// ── Legal Cluster ──
+import Terms from './routes/legal/Terms';
+import Privacy from './routes/legal/Privacy';
+import Support from './routes/legal/Support';
+
 // ── Home Cluster (S-06 → S-08) ──
 import Dashboard from './routes/home/Dashboard';
 import Notifications from './routes/home/Notifications';
@@ -62,6 +67,10 @@ const router = createBrowserRouter([
       { path: '/register',        element: <Register /> },
       { path: '/forgot-password', element: <ForgotPassword /> },
       { path: '/onboarding',      element: <Onboarding /> },
+      // ── Legal ──
+      { path: '/terms',           element: <Terms /> },
+      { path: '/privacy',         element: <Privacy /> },
+      { path: '/support',         element: <Support /> },
       // Legacy combined auth route (preserves existing action)
       {
         path: '/auth',
