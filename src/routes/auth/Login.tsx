@@ -9,7 +9,7 @@ import { useNavigate, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthShell } from '../../components/Auth/AuthShell';
-import { GoogleIcon, AppleIcon, MailIcon, EyeIcon, EyeOffIcon } from '../../components/Auth/BrandIcons';
+import { GoogleIcon, FacebookIcon, MailIcon, EyeIcon, EyeOffIcon } from '../../components/Auth/BrandIcons';
 
 interface LoginForm {
   email: string;
@@ -129,23 +129,23 @@ export default function Login() {
             <span>Continue with Google</span>
           </motion.button>
 
-          {/* Apple */}
+          {/* Facebook */}
           <motion.button
             className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
             style={{
-              background: 'var(--text-primary)',
+              background: '#1877F2',
               border: 'none',
               borderRadius: 'var(--radius-md)',
               fontFamily: 'var(--font-body)',
               fontWeight: 600,
               fontSize: '0.85rem',
-              color: 'var(--bg-primary)',
+              color: '#ffffff',
             }}
             whileHover={{ y: -1, opacity: 0.92 }}
             whileTap={{ scale: 0.98 }}
           >
-            <AppleIcon size={18} />
-            <span>Continue with Apple</span>
+            <FacebookIcon size={18} />
+            <span>Continue with Facebook</span>
           </motion.button>
         </motion.div>
 
