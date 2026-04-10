@@ -97,8 +97,9 @@ export default function Register() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.4 }}
         >
-          <motion.button
-            className="flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+          <motion.a
+            href="/api/auth/google"
+            className="flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer no-underline"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-default)',
@@ -113,10 +114,11 @@ export default function Register() {
           >
             <GoogleIcon size={18} />
             <span>Sign up with Google</span>
-          </motion.button>
+          </motion.a>
 
-          <motion.button
-            className="flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+          <motion.a
+            href="/api/auth/facebook"
+            className="flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer no-underline"
             style={{
               background: '#1877F2',
               border: 'none',
@@ -131,7 +133,7 @@ export default function Register() {
           >
             <FacebookIcon size={18} />
             <span>Sign up with Facebook</span>
-          </motion.button>
+          </motion.a>
         </motion.div>
 
         {/* Divider */}

@@ -47,7 +47,7 @@ export function FacebookIcon({ className, size = 20 }: IconProps) {
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="#1877F2"
+      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >

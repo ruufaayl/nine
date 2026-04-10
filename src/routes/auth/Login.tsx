@@ -111,8 +111,9 @@ export default function Login() {
           transition={{ delay: 0.1, duration: 0.4 }}
         >
           {/* Google */}
-          <motion.button
-            className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+          <motion.a
+            href="/api/auth/google"
+            className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer no-underline"
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-default)',
@@ -127,11 +128,12 @@ export default function Login() {
           >
             <GoogleIcon size={18} />
             <span>Continue with Google</span>
-          </motion.button>
+          </motion.a>
 
           {/* Facebook */}
-          <motion.button
-            className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer"
+          <motion.a
+            href="/api/auth/facebook"
+            className="relative flex items-center justify-center gap-3 w-full py-3.5 cursor-pointer no-underline"
             style={{
               background: '#1877F2',
               border: 'none',
@@ -146,7 +148,7 @@ export default function Login() {
           >
             <FacebookIcon size={18} />
             <span>Continue with Facebook</span>
-          </motion.button>
+          </motion.a>
         </motion.div>
 
         {/* Divider */}

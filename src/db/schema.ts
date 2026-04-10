@@ -343,6 +343,28 @@ export const matchEscrow = pgTable(
   ],
 );
 
+// ─── OAuth Accounts ─────────────────────────
+
+export const oauthProviderEnum = pgEnum('oauth_provider', ['google', 'facebook']);
+
+export const oauthAccounts = pgTable(
+  'oauth_accounts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    provider: oauthProviderEnum('provider').notNull(),
+    providerUserId: varchar('provider_user_id', { length: 255 }).notNull(),
+    providerEmail: varchar('provider_email', { length: 255 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_oauth_user_id').on(table.userId),
+    index('idx_oauth_provider_uid').on(table.provider, table.providerUserId),
+  ],
+);
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Relations
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -351,12 +373,20 @@ export const usersRelations = relations(users, ({ many }) => ({
   scores: many(scores),
   sessions: many(sessions),
   passwordResets: many(passwordResets),
+  oauthAccounts: many(oauthAccounts),
   matchPlayers: many(matchPlayers),
   sentFriendships: many(friendships, { relationName: 'sentFriendships' }),
   receivedFriendships: many(friendships, { relationName: 'receivedFriendships' }),
   notifications: many(notifications, { relationName: 'userNotifications' }),
   sentNotifications: many(notifications, { relationName: 'senderNotifications' }),
   dailyChallengeScores: many(dailyChallengeScores),
+}));
+
+export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [oauthAccounts.userId],
+    references: [users.id],
+  }),
 }));
 
 export const scoresRelations = relations(scores, ({ one }) => ({
