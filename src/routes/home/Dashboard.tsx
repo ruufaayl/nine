@@ -111,18 +111,18 @@ export default function Dashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    fetch('/api/dashboard/daily', { credentials: 'include' })
+    fetch('/api/dashboard?q=daily', { credentials: 'include' })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setDaily(d))
       .catch(() => {});
 
-    fetch('/api/dashboard/live')
+    fetch('/api/dashboard?q=live')
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setLiveMatches(d))
       .catch(() => {});
 
     if (user) {
-      fetch('/api/dashboard/activity', { credentials: 'include' })
+      fetch('/api/dashboard?q=activity', { credentials: 'include' })
         .then((r) => r.ok ? r.json() : null)
         .then((d) => d && setActivity(d))
         .catch(() => {});

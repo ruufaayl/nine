@@ -72,7 +72,7 @@ export default function Matchmaking() {
     timeoutRef.current = setTimeout(() => {
       setMatchFound(true);
       setTimeout(() => {
-        navigate(`/play/lobby/match-${Date.now().toString(36)}?mode=${modeId}&difficulty=${difficulty}`);
+        navigate(`/play/lobby/match-${Date.now().toString(36)}?mode=${modeId}&difficulty=${difficulty}`, { replace: true });
       }, 700);
     }, SEARCH_DURATION);
     return () => clearTimeout(timeoutRef.current);
@@ -80,7 +80,7 @@ export default function Matchmaking() {
 
   const handleCancel = () => {
     clearTimeout(timeoutRef.current);
-    navigate('/play');
+    navigate(-1);
   };
 
   const minutes = Math.floor(elapsed / 60);
@@ -101,9 +101,9 @@ export default function Matchmaking() {
       />
 
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
-        {/* Mode label */}
+        {/* Mode + difficulty + rank label */}
         <motion.div
-          className="mb-10 text-center"
+          className="mb-10 flex flex-col items-center gap-2.5"
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -117,7 +117,13 @@ export default function Matchmaking() {
               fontFamily: 'var(--font-body)',
             }}
           >
-            {mode?.name ?? modeId}
+            {mode?.name ?? modeId} · {difficulty}
+          </span>
+          <span
+            className="text-[0.5rem] font-semibold uppercase tracking-[0.15em]"
+            style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-body)' }}
+          >
+            Matching same-rank opponents
           </span>
         </motion.div>
 

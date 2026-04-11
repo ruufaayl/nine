@@ -64,7 +64,7 @@ export default function StatsHistory() {
 
   // Fetch match history
   useEffect(() => {
-    fetch('/api/profile/stats', { credentials: 'include' })
+    fetch('/api/profile?q=stats', { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
         setMatches(data.matches ?? []);

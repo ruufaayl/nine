@@ -53,7 +53,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
   }> = [];
 
   try {
-    const scoresRes = await fetch('/api/profile/scores', { credentials: 'include' });
+    const scoresRes = await fetch('/api/profile?q=scores', { credentials: 'include' });
     if (scoresRes.ok) {
       const scoresData = await scoresRes.json();
       recentScores = scoresData.scores ?? [];

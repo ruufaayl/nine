@@ -70,7 +70,7 @@ export default function MyProfile() {
 
   // Fetch recent scores
   useEffect(() => {
-    fetch('/api/profile/scores', { credentials: 'include' })
+    fetch('/api/profile?q=scores', { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => setRecentScores(data.scores ?? []))
       .catch(() => {});

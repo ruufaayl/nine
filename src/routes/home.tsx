@@ -840,7 +840,7 @@ export default function Home() {
       if (!activeMode) return;
       // Let squash animation play, then navigate
       setTimeout(() => {
-        navigate(`/play/mode/${activeMode.id}?difficulty=${difficulty}`);
+        navigate(`/play/game/offline-${Date.now().toString(36)}?mode=${activeMode.id}&difficulty=${difficulty}`);
       }, 320);
     },
     [activeMode, navigate],

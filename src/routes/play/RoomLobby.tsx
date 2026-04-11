@@ -153,6 +153,7 @@ export default function RoomLobby() {
   const [selfReady, setSelfReady] = useState(false);
   const [opponentReady, setOpponentReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [opponentLeft, setOpponentLeft] = useState(false);
   const countdownRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   // Simulate opponent readying
@@ -169,10 +170,10 @@ export default function RoomLobby() {
 
   // Start countdown when both ready
   useEffect(() => {
-    if (selfReady && opponentReady && countdown === null) {
+    if (selfReady && opponentReady && countdown === null && !opponentLeft) {
       setCountdown(COUNTDOWN_SECONDS);
     }
-  }, [selfReady, opponentReady, countdown]);
+  }, [selfReady, opponentReady, countdown, opponentLeft]);
 
   // Tick countdown
   useEffect(() => {
@@ -189,16 +190,35 @@ export default function RoomLobby() {
 
   // Navigate on 0
   useEffect(() => {
-    if (countdown === 0) {
+    if (countdown === 0 && !opponentLeft) {
       const t = setTimeout(() => {
-        navigate(`/play/game/${roomId}?mode=${modeId}&difficulty=${difficulty}`);
+        navigate(`/play/game/${roomId}?mode=${modeId}&difficulty=${difficulty}`, { replace: true });
       }, 500);
       return () => clearTimeout(t);
     }
-  }, [countdown, navigate, roomId, modeId, difficulty]);
+  }, [countdown, navigate, roomId, modeId, difficulty, opponentLeft]);
+
+  // Handle opponent leaving — show overlay for 2s, then re-enter matchmaking
+  useEffect(() => {
+    if (!opponentLeft) return;
+    // Stop countdown immediately
+    clearInterval(countdownRef.current);
+    setCountdown(null);
+
+    const t = setTimeout(() => {
+      navigate(`/play/matchmaking?mode=${modeId}&difficulty=${difficulty}`, { replace: true });
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [opponentLeft, navigate, modeId, difficulty]);
 
   const toggleReady = useCallback(() => setSelfReady((p) => !p), []);
-  const allReady = selfReady && opponentReady;
+  const allReady = selfReady && opponentReady && !opponentLeft;
+
+  // Leave during countdown or before — go back to mode selection
+  const handleLeave = useCallback(() => {
+    clearInterval(countdownRef.current);
+    navigate(-1);
+  }, [navigate]);
 
   return (
     <div className="relative min-h-full" style={{ background: 'var(--bg-primary)' }}>
@@ -334,7 +354,7 @@ export default function RoomLobby() {
           </AnimatePresence>
 
           {/* Waiting indicator */}
-          {!allReady && (
+          {!allReady && !opponentLeft && (
             <motion.p
               className="text-[0.6rem] font-semibold mt-6"
               style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
@@ -347,24 +367,70 @@ export default function RoomLobby() {
         </div>
 
         {/* ── Leave button ── */}
-        <div className="px-6 pb-6 flex justify-center">
-          <motion.button
-            className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] cursor-pointer px-6 py-2"
-            style={{
-              color: 'var(--text-tertiary)',
-              background: 'none',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-full)',
-              fontFamily: 'var(--font-body)',
-            }}
-            whileHover={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => navigate('/play')}
-          >
-            Leave Room
-          </motion.button>
-        </div>
+        {!opponentLeft && (
+          <div className="px-6 pb-6 flex justify-center">
+            <motion.button
+              className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] cursor-pointer px-6 py-2"
+              style={{
+                color: 'var(--text-tertiary)',
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-full)',
+                fontFamily: 'var(--font-body)',
+              }}
+              whileHover={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
+              whileTap={{ scale: 0.96 }}
+              onClick={handleLeave}
+            >
+              Leave Room
+            </motion.button>
+          </div>
+        )}
       </div>
+
+      {/* ── Player Left Overlay ── */}
+      <AnimatePresence>
+        {opponentLeft && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+            style={{
+              background: 'rgba(12, 12, 15, 0.92)',
+              backdropFilter: 'blur(16px)',
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="flex flex-col items-center gap-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <span className="text-4xl">🚪</span>
+              <h2
+                className="text-xl font-black uppercase tracking-[0.08em]"
+                style={{ fontFamily: 'var(--font-display)', color: '#EF4444' }}
+              >
+                Player Left
+              </h2>
+              <p
+                className="text-[0.65rem] font-semibold"
+                style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+              >
+                Finding a new opponent…
+              </p>
+              <motion.div
+                className="w-8 h-0.5 mt-2"
+                style={{ background: color, transformOrigin: 'left' }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 2, ease: 'linear' }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
