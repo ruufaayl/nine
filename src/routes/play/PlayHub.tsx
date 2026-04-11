@@ -10,6 +10,7 @@
 
 import { useNavigate } from 'react-router';
 import { useRef, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   motion,
   useScroll,
@@ -164,7 +165,7 @@ function PileCard({ mode, index, total, scrollYProgress, onClick }: CardProps) {
       }}
     >
       <motion.button
-        onClick={onClick}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
         className="relative w-full text-left outline-none select-none cursor-pointer block"
         whileTap={{ scale: 0.98 }}
         style={{
@@ -333,22 +334,19 @@ function PlaySheet({ mode, onClose, onPlay }: PlaySheetProps) {
   const trophyDelta = TROPHY_DELTAS[difficulty] ?? { win: 12, loss: 8 };
 
   return (
-    <motion.div
-      className="fixed inset-0 z-[80] flex flex-col justify-end"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+    <div
+      className="fixed inset-0 z-[9999] flex flex-col justify-end"
+      style={{ pointerEvents: 'auto' }}
     >
       {/* Backdrop */}
-      <motion.div
+      <div
         className="absolute inset-0"
         style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
         onClick={onClose}
       />
 
       {/* Sheet */}
-      <motion.div
+      <div
         className="relative w-full max-w-lg mx-auto"
         style={{
           background: 'var(--bg-primary)',
@@ -356,10 +354,6 @@ function PlaySheet({ mode, onClose, onPlay }: PlaySheetProps) {
           maxHeight: '85dvh',
           overflow: 'auto',
         }}
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         {/* Mode header strip */}
         <div
@@ -615,8 +609,8 @@ function PlaySheet({ mode, onClose, onPlay }: PlaySheetProps) {
             </motion.button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -647,84 +641,85 @@ export default function PlayHub() {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative h-full overflow-y-auto overflow-x-hidden"
-      style={{
-        background: 'var(--bg-primary)',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-      }}
-    >
-      {/* Header */}
-      <div className="px-6 pt-6 pb-5">
-        <div className="flex items-end justify-between">
-          <div>
-            <h1
-              className="text-3xl font-black tracking-[-0.03em] leading-none"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
-            >
-              Play
-            </h1>
-            <p
-              className="text-[0.7rem] mt-2 uppercase tracking-[0.18em] font-semibold"
-              style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
-            >
-              {GAME_MODES.length} modes · scroll to browse
-            </p>
-          </div>
-          <div
-            className="text-[0.55rem] font-bold uppercase tracking-[0.18em] tabular-nums"
-            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-numeric)' }}
-          >
-            01 / {String(GAME_MODES.length).padStart(2, '0')}
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll track */}
+    <>
       <div
-        ref={trackRef}
-        className="relative px-6"
-        style={{ height: `${trackHeightVh}vh` }}
+        ref={containerRef}
+        className="relative h-full overflow-y-auto overflow-x-hidden"
+        style={{
+          background: 'var(--bg-primary)',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+        }}
       >
-        {/* Sticky viewport — centered between header & nav */}
-        <div
-          className="sticky mx-auto"
-          style={{
-            top: '1.375rem',
-            height: 'calc(100dvh - 9.5rem)',
-            maxWidth: '390px',
-          }}
-        >
-          <div className="relative w-full h-full">
-            {GAME_MODES.map((mode, i) => (
-              <PileCard
-                key={mode.id}
-                mode={mode}
-                index={i}
-                total={GAME_MODES.length}
-                scrollYProgress={scrollYProgress}
-                onClick={() => setSelectedMode(mode)}
-              />
-            ))}
+        {/* Header */}
+        <div className="px-6 pt-6 pb-5">
+          <div className="flex items-end justify-between">
+            <div>
+              <h1
+                className="text-3xl font-black tracking-[-0.03em] leading-none"
+                style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
+              >
+                Play
+              </h1>
+              <p
+                className="text-[0.7rem] mt-2 uppercase tracking-[0.18em] font-semibold"
+                style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-body)' }}
+              >
+                {GAME_MODES.length} modes · scroll to browse
+              </p>
+            </div>
+            <div
+              className="text-[0.55rem] font-bold uppercase tracking-[0.18em] tabular-nums"
+              style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-numeric)' }}
+            >
+              01 / {String(GAME_MODES.length).padStart(2, '0')}
+            </div>
           </div>
         </div>
+
+        {/* Scroll track */}
+        <div
+          ref={trackRef}
+          className="relative px-6"
+          style={{ height: `${trackHeightVh}vh` }}
+        >
+          {/* Sticky viewport — centered between header & nav */}
+          <div
+            className="sticky mx-auto"
+            style={{
+              top: '1.375rem',
+              height: 'calc(100dvh - 9.5rem)',
+              maxWidth: '390px',
+            }}
+          >
+            <div className="relative w-full h-full">
+              {GAME_MODES.map((mode, i) => (
+                <PileCard
+                  key={mode.id}
+                  mode={mode}
+                  index={i}
+                  total={GAME_MODES.length}
+                  scrollYProgress={scrollYProgress}
+                  onClick={() => setSelectedMode(mode)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Trailing spacer */}
+        <div style={{ height: '10vh' }} />
       </div>
 
-      {/* Trailing spacer */}
-      <div style={{ height: '10vh' }} />
-
-      {/* Play bottom sheet */}
-      <AnimatePresence>
-        {selectedMode && (
-          <PlaySheet
-            mode={selectedMode}
-            onClose={() => setSelectedMode(null)}
-            onPlay={handlePlay}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+      {/* Play bottom sheet — portaled to body to escape transform stacking context */}
+      {selectedMode && createPortal(
+        <PlaySheet
+          mode={selectedMode}
+          onClose={() => setSelectedMode(null)}
+          onPlay={handlePlay}
+        />,
+        document.body,
+      )}
+    </>
   );
 }
